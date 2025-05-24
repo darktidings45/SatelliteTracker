@@ -100,10 +100,31 @@ const Earth = () => {
       
       {/* Location marker if user location is set */}
       {userPosition && (
-        <mesh position={userPosition.toArray()}>
-          <sphereGeometry args={[0.2, 16, 16]} />
-          <meshBasicMaterial color="#ff0000" />
-        </mesh>
+        <>
+          <mesh position={userPosition.toArray()}>
+            <sphereGeometry args={[0.2, 16, 16]} />
+            <meshBasicMaterial color="#ff0000" />
+          </mesh>
+          
+          {/* Aperture cone visualization */}
+          {showApertureCone && (
+            <group position={userPosition.toArray()}>
+              <mesh ref={coneRef}>
+                <coneGeometry 
+                  args={[
+                    EARTH_RADIUS * 2, // Base radius
+                    EARTH_RADIUS * 3, // Height
+                    32, // Segments
+                    1, // Height segments
+                    true // Open ended
+                  ]} 
+                  rotation={[Math.PI, 0, 0]} // Point outward from Earth
+                />
+                <primitive object={apertureMaterial} attach="material" />
+              </mesh>
+            </group>
+          )}
+        </>
       )}
       
       {/* Render all satellites */}
