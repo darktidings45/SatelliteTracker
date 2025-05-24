@@ -49,6 +49,7 @@ const Earth = () => {
     transparent: true,
     opacity: 0.2,
     side: THREE.DoubleSide,
+    depthWrite: false, // Prevent z-fighting with the Earth
   }), []);
   
   // Rotate the earth if auto-rotation is enabled
@@ -129,7 +130,11 @@ const Earth = () => {
               position={userPositionData.position.toArray()}
               quaternion={userPositionData.quaternion}
             >
-              <mesh ref={coneRef} position={[0, EARTH_RADIUS * 0.5, 0]} rotation={[Math.PI, 0, 0]}>
+              {/* The aperture cone's vertex (narrow end) should be exactly at the surface location */}
+              <mesh 
+                ref={coneRef} 
+                rotation={[Math.PI, 0, 0]}
+              >
                 <coneGeometry 
                   args={[
                     // Base radius depends on aperture angle (in radians)
@@ -142,6 +147,12 @@ const Earth = () => {
                   ]} 
                 />
                 <primitive object={apertureMaterial} attach="material" />
+              </mesh>
+              
+              {/* Visual indicator of the exact cone origin point */}
+              <mesh>
+                <sphereGeometry args={[0.1, 16, 16]} />
+                <meshBasicMaterial color="#ffff00" />
               </mesh>
             </group>
           )}
