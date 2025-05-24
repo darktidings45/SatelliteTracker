@@ -6,8 +6,8 @@ import { useSatelliteStore } from '../lib/stores/useSatelliteStore';
 import Satellite from './Satellite';
 import { EARTH_RADIUS } from '../lib/consts';
 
-// Average Earth altitude above sea level in relative units to our Earth radius
-const AVERAGE_EARTH_ALTITUDE = 0.0005 * EARTH_RADIUS;
+// Constants for cone positioning
+// No altitude offset needed - we'll use a direct calculation
 
 const Earth = () => {
   const earthRef = useRef<THREE.Group>(null);
@@ -138,38 +138,94 @@ const Earth = () => {
           
           {/* Aperture cone visualization */}
           {showApertureCone && userPositionData && (
-            <group 
-              position={userPositionData.position.toArray()}
-              quaternion={userPositionData.quaternion}
-            >
-              {/* Calculate offset to place cone origin at Earth's surface with altitude */}
-              <group position={[0, AVERAGE_EARTH_ALTITUDE, 0]}>
-                {/* The aperture cone's vertex (narrow end) should be exactly at the surface location */}
-                <mesh 
-                  ref={coneRef} 
-                  rotation={[Math.PI, 0, 0]}
-                >
-                  <coneGeometry 
-                    args={[
-                      // Base radius depends on aperture angle (in radians)
-                      // Use tangent to calculate the radius based on height and angle
-                      EARTH_RADIUS * 2 * Math.tan((apertureAngle * Math.PI / 180) / 2), 
-                      EARTH_RADIUS * 4, // Height
-                      32, // Segments
-                      1, // Height segments
-                      true // Open ended
-                    ]} 
-                  />
+            <>
+              {/* Yellow marker to show exact location on Earth's surface */}
+              <mesh position={userPositionData.position.toArray()}>
+                <sphereGeometry args={[0.15, 16, 16]} />
+                <meshBasicMaterial color="#ffff00" />
+              </mesh>
+              
+              {/* Custom cone that starts exactly at Earth's surface */}
+              {/* We create a cylindrical cone instead of using the built-in cone geometry */}
+              <group 
+                position={[0, 0, 0]}
+                matrixAutoUpdate={true}
+              >
+                {/* Create cone using custom geometry that starts at the surface */}
+                <mesh ref={coneRef}>
+                  <primitive attach="geometry">
+                    {(() => {
+                      // Create a custom cone geometry that starts at user location
+                      const geometry = new THREE.BufferGeometry();
+                      
+                      // Calculate apex position (on Earth's surface)
+                      const apex = userPositionData.position.clone();
+                      
+                      // Calculate base center (in direction of normal)
+                      const direction = apex.clone().normalize();
+                      const distance = EARTH_RADIUS * 4; // Length of cone
+                      const baseCenter = apex.clone().add(direction.multiplyScalar(distance));
+                      
+                      // Calculate base radius from aperture angle
+                      const baseRadius = distance * Math.tan((apertureAngle * Math.PI / 180) / 2);
+                      
+                      // Create a circle of points for the base
+                      const segments = 32;
+                      const basePoints = [];
+                      
+                      // Create vectors perpendicular to the direction vector
+                      let perpVector1 = new THREE.Vector3(1, 0, 0);
+                      if (Math.abs(direction.dot(perpVector1)) > 0.99) {
+                        perpVector1 = new THREE.Vector3(0, 1, 0);
+                      }
+                      
+                      const perpVector2 = new THREE.Vector3().crossVectors(direction, perpVector1).normalize();
+                      perpVector1 = new THREE.Vector3().crossVectors(perpVector2, direction).normalize();
+                      
+                      // Generate points around the circle
+                      for (let i = 0; i <= segments; i++) {
+                        const angle = (i / segments) * Math.PI * 2;
+                        const x = Math.cos(angle) * baseRadius;
+                        const y = Math.sin(angle) * baseRadius;
+                        
+                        // Position on the base circle
+                        const point = baseCenter.clone()
+                          .add(perpVector1.clone().multiplyScalar(x))
+                          .add(perpVector2.clone().multiplyScalar(y));
+                          
+                        basePoints.push(point);
+                      }
+                      
+                      // Create cone vertices and faces
+                      const vertices = [];
+                      const indices = [];
+                      
+                      // Add apex as first vertex
+                      vertices.push(apex.x, apex.y, apex.z);
+                      
+                      // Add base points
+                      for (let i = 0; i < basePoints.length; i++) {
+                        const point = basePoints[i];
+                        vertices.push(point.x, point.y, point.z);
+                      }
+                      
+                      // Create triangles connecting apex to base
+                      for (let i = 1; i < basePoints.length; i++) {
+                        indices.push(0, i, i + 1);
+                      }
+                      
+                      // Set attributes
+                      geometry.setIndex(indices);
+                      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+                      geometry.computeVertexNormals();
+                      
+                      return geometry;
+                    })()}
+                  </primitive>
                   <primitive object={apertureMaterial} attach="material" />
                 </mesh>
-                
-                {/* Visual indicator of the exact cone origin point */}
-                <mesh>
-                  <sphereGeometry args={[0.1, 16, 16]} />
-                  <meshBasicMaterial color="#ffff00" />
-                </mesh>
               </group>
-            </group>
+            </>
           )}
         </>
       )}
