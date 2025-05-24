@@ -30,14 +30,12 @@ const Earth = () => {
   const earthTextures = useTexture({
     day: '/textures/earth_daymap.jpg',
     night: '/textures/earth_nightmap.jpg',
-    specular: '/textures/earth_specular.jpg',
   });
   
   // Earth materials with textures
   const earthMaterial = useMemo(() => {
     const material = new THREE.MeshStandardMaterial({
       map: mapStyle === 'day' ? earthTextures.day : earthTextures.night,
-      roughnessMap: earthTextures.specular,
       roughness: 0.7,
       metalness: 0.2,
     });
@@ -151,77 +149,30 @@ const Earth = () => {
                 position={[0, 0, 0]}
                 matrixAutoUpdate={true}
               >
-                {/* Create cone using custom geometry that starts at the surface */}
+                {/* Use a simpler approach for the cone */}
                 <mesh ref={coneRef}>
-                  <primitive attach="geometry">
-                    {(() => {
-                      // Create a custom cone geometry that starts at user location
-                      const geometry = new THREE.BufferGeometry();
-                      
-                      // Calculate apex position (on Earth's surface)
-                      const apex = userPositionData.position.clone();
-                      
-                      // Calculate base center (in direction of normal)
-                      const direction = apex.clone().normalize();
-                      const distance = EARTH_RADIUS * 4; // Length of cone
-                      const baseCenter = apex.clone().add(direction.multiplyScalar(distance));
-                      
-                      // Calculate base radius from aperture angle
-                      const baseRadius = distance * Math.tan((apertureAngle * Math.PI / 180) / 2);
-                      
-                      // Create a circle of points for the base
-                      const segments = 32;
-                      const basePoints = [];
-                      
-                      // Create vectors perpendicular to the direction vector
-                      let perpVector1 = new THREE.Vector3(1, 0, 0);
-                      if (Math.abs(direction.dot(perpVector1)) > 0.99) {
-                        perpVector1 = new THREE.Vector3(0, 1, 0);
-                      }
-                      
-                      const perpVector2 = new THREE.Vector3().crossVectors(direction, perpVector1).normalize();
-                      perpVector1 = new THREE.Vector3().crossVectors(perpVector2, direction).normalize();
-                      
-                      // Generate points around the circle
-                      for (let i = 0; i <= segments; i++) {
-                        const angle = (i / segments) * Math.PI * 2;
-                        const x = Math.cos(angle) * baseRadius;
-                        const y = Math.sin(angle) * baseRadius;
-                        
-                        // Position on the base circle
-                        const point = baseCenter.clone()
-                          .add(perpVector1.clone().multiplyScalar(x))
-                          .add(perpVector2.clone().multiplyScalar(y));
-                          
-                        basePoints.push(point);
-                      }
-                      
-                      // Create cone vertices and faces
-                      const vertices = [];
-                      const indices = [];
-                      
-                      // Add apex as first vertex
-                      vertices.push(apex.x, apex.y, apex.z);
-                      
-                      // Add base points
-                      for (let i = 0; i < basePoints.length; i++) {
-                        const point = basePoints[i];
-                        vertices.push(point.x, point.y, point.z);
-                      }
-                      
-                      // Create triangles connecting apex to base
-                      for (let i = 1; i < basePoints.length; i++) {
-                        indices.push(0, i, i + 1);
-                      }
-                      
-                      // Set attributes
-                      geometry.setIndex(indices);
-                      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-                      geometry.computeVertexNormals();
-                      
-                      return geometry;
-                    })()}
-                  </primitive>
+                  {useMemo(() => {
+                    // Use built-in ConeGeometry but position it carefully
+                    const height = EARTH_RADIUS * 4;
+                    const baseRadius = height * Math.tan((apertureAngle * Math.PI / 180) / 2);
+                    
+                    // Create cone geometry
+                    const geometry = new THREE.ConeGeometry(
+                      baseRadius,
+                      height,
+                      32,
+                      1,
+                      true
+                    );
+                    
+                    // Move cone so vertex is at origin
+                    geometry.translate(0, height / 2, 0);
+                    
+                    // Rotate to align with direction
+                    geometry.rotateX(Math.PI);
+                    
+                    return <primitive object={geometry} attach="geometry" />;
+                  }, [apertureAngle])}
                   <primitive object={apertureMaterial} attach="material" />
                 </mesh>
               </group>
