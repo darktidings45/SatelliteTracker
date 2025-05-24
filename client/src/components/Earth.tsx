@@ -231,38 +231,7 @@ const Earth = () => {
                 </group>
               </group>
               
-              {/* Direction controls as a floating panel in the top-right corner */}
-              <Html
-                position={[0, 0, 0]} 
-                style={{
-                  position: 'absolute',
-                  top: '20px',
-                  right: '20px',
-                  pointerEvents: 'none'
-                }}
-              >
-                <div style={{ 
-                  color: 'white', 
-                  background: 'rgba(0,0,0,0.7)', 
-                  padding: '15px',
-                  borderRadius: '8px',
-                  width: '200px',
-                  border: '1px solid #30718d',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-                  fontFamily: 'Inter, sans-serif'
-                }}>
-                  <div style={{ marginBottom: '5px', fontSize: '14px', fontWeight: 'bold', color: '#f7d794' }}>
-                    Aperture Controls
-                  </div>
-                  <div style={{ marginBottom: '3px' }}>Azimuth: {azimuth}°</div>
-                  <div style={{ marginBottom: '10px' }}>Elevation: {elevation}°</div>
-                  <div style={{ fontSize: '0.8em', opacity: 0.8 }}>
-                    Use arrow keys to adjust:
-                    <br />← → for azimuth
-                    <br />↑ ↓ for elevation
-                  </div>
-                </div>
-              </Html>
+              {/* Direction controls now integrated into the FilterPanel */}
             </>
           )}
         </>

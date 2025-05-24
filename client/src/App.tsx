@@ -15,6 +15,10 @@ function App() {
   const [showCanvas, setShowCanvas] = useState(false);
   const { loadSatellites, loading, error } = useSatelliteStore();
   const { setHitSound, setSuccessSound, toggleMute } = useAudio();
+  
+  // Direction controls for the aperture cone
+  const [azimuth, setAzimuth] = useState(0);
+  const [elevation, setElevation] = useState(0);
 
   // Initialize sounds and load data
   useEffect(() => {
@@ -86,7 +90,7 @@ function App() {
             
             {/* Earth and satellites */}
             <Suspense fallback={null}>
-              <Earth />
+              <Earth azimuth={azimuth} elevation={elevation} setAzimuth={setAzimuth} setElevation={setElevation} />
             </Suspense>
             
             {/* Camera controls */}
@@ -103,7 +107,12 @@ function App() {
           </Canvas>
           
           {/* UI Components */}
-          <FilterPanel />
+          <FilterPanel directionControls={{
+            azimuth,
+            elevation,
+            setAzimuth,
+            setElevation
+          }} />
           <InfoPanel />
           <TimeControls />
         </>

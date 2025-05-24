@@ -4,7 +4,15 @@ import { useGeolocation } from '../../hooks/useGeolocation';
 import { useAudio } from '../../lib/stores/useAudio';
 import { cn } from '../../lib/utils';
 
-const FilterPanel = () => {
+// For azimuth and elevation controls
+interface DirectionControls {
+  azimuth: number;
+  elevation: number;
+  setAzimuth: (value: number) => void;
+  setElevation: (value: number) => void;
+}
+
+const FilterPanel = ({ directionControls }: { directionControls?: DirectionControls }) => {
   const { 
     setSatelliteTypeFilter, 
     satelliteTypeFilter,
@@ -179,6 +187,59 @@ const FilterPanel = () => {
               <span>180°</span>
             </div>
           </div>
+          
+          {/* Azimuth and Elevation controls */}
+          {directionControls && userLocation && (
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold mb-2 text-[#3498db]">Cone Direction</h3>
+              
+              <div className="mb-2">
+                <label htmlFor="azimuth" className="text-xs text-[#b2bec3] block mb-1">
+                  Azimuth: {directionControls.azimuth}° (←→)
+                </label>
+                <input
+                  id="azimuth"
+                  type="range"
+                  min="0"
+                  max="360"
+                  step="10"
+                  value={directionControls.azimuth}
+                  onChange={(e) => directionControls.setAzimuth(Number(e.target.value))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-[#b2bec3]">
+                  <span>0°</span>
+                  <span>180°</span>
+                  <span>360°</span>
+                </div>
+              </div>
+              
+              <div>
+                <label htmlFor="elevation" className="text-xs text-[#b2bec3] block mb-1">
+                  Elevation: {directionControls.elevation}° (↑↓)
+                </label>
+                <input
+                  id="elevation"
+                  type="range"
+                  min="-90"
+                  max="90"
+                  step="10"
+                  value={directionControls.elevation}
+                  onChange={(e) => directionControls.setElevation(Number(e.target.value))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-[#b2bec3]">
+                  <span>-90°</span>
+                  <span>0°</span>
+                  <span>90°</span>
+                </div>
+              </div>
+              
+              <p className="text-xs text-[#b2bec3] mt-2">
+                Use arrow keys or sliders to adjust cone direction
+              </p>
+            </div>
+          )}
           
           <div className="flex justify-between items-center text-xs">
             <p className="text-[#b2bec3]">
