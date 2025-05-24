@@ -7,7 +7,8 @@ import Satellite from './Satellite';
 import { EARTH_RADIUS } from '../lib/consts';
 
 // Average Earth altitude above sea level in relative units to our Earth radius
-const AVERAGE_EARTH_ALTITUDE = 0.0005 * EARTH_RADIUS;
+// Increasing this value to ensure the cone is clearly visible on the surface
+const AVERAGE_EARTH_ALTITUDE = 0.05 * EARTH_RADIUS;
 
 const Earth = () => {
   const earthRef = useRef<THREE.Group>(null);
@@ -43,12 +44,75 @@ const Earth = () => {
     }
   }, [mapDetail, storeSetMapDetail]);
   
-  // Load Earth texture maps
-  const earthTextures = useTexture({
-    day: '/textures/earth_daymap.jpg',
-    night: '/textures/earth_nightmap.jpg',
-    specular: '/textures/earth_specular.jpg',
-  });
+  // Load Earth texture maps with error handling
+  const earthTextures = useMemo(() => {
+    try {
+      // Create a basic color texture as fallback
+      const fallbackTexture = new THREE.TextureLoader().load('');
+      fallbackTexture.image = { width: 1, height: 1 };
+      
+      // Create a canvas to generate a basic Earth texture
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        // Draw day texture (blue with green continents)
+        ctx.fillStyle = '#1a5276'; // Ocean blue
+        ctx.fillRect(0, 0, 256, 256);
+        
+        // Add some land masses
+        ctx.fillStyle = '#27ae60'; // Land green
+        ctx.beginPath();
+        ctx.ellipse(100, 100, 40, 60, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(180, 150, 30, 20, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      // Create textures from canvas
+      const dayTexture = new THREE.CanvasTexture(canvas);
+      
+      // Night texture (darker version)
+      const nightCanvas = document.createElement('canvas');
+      nightCanvas.width = 256;
+      nightCanvas.height = 256;
+      const nightCtx = nightCanvas.getContext('2d');
+      
+      if (nightCtx) {
+        nightCtx.fillStyle = '#0a1622'; // Dark ocean
+        nightCtx.fillRect(0, 0, 256, 256);
+        
+        // Add some land masses
+        nightCtx.fillStyle = '#1e3a29'; // Dark land
+        nightCtx.beginPath();
+        nightCtx.ellipse(100, 100, 40, 60, 0, 0, Math.PI * 2);
+        nightCtx.fill();
+        nightCtx.beginPath();
+        nightCtx.ellipse(180, 150, 30, 20, 0, 0, Math.PI * 2);
+        nightCtx.fill();
+      }
+      
+      const nightTexture = new THREE.CanvasTexture(nightCanvas);
+      
+      return {
+        day: dayTexture,
+        night: nightTexture,
+        specular: fallbackTexture,
+      };
+    } catch (error) {
+      console.error('Failed to load Earth textures:', error);
+      // Return placeholder textures
+      const fallbackTexture = new THREE.TextureLoader().load('');
+      return {
+        day: fallbackTexture,
+        night: fallbackTexture,
+        specular: fallbackTexture
+      };
+    }
+  }, []);
   
   // Earth materials with textures
   const earthMaterial = useMemo(() => {
