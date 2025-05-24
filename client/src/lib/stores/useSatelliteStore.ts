@@ -217,7 +217,10 @@ export const useSatelliteStore = create<SatelliteState>()(
           ? satellites 
           : satellites.filter(sat => sat.type === type);
         
+        // Force update filtered satellites
         set({ filteredSatellites: filtered });
+        
+        console.log(`Satellite type filter applied: ${type}, found ${filtered.length} satellites`);
       },
       
       // Set user location for visibility filtering

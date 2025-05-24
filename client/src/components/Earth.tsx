@@ -129,7 +129,7 @@ const Earth = () => {
               position={userPositionData.position.toArray()}
               quaternion={userPositionData.quaternion}
             >
-              <mesh ref={coneRef}>
+              <mesh ref={coneRef} position={[0, EARTH_RADIUS * 0.5, 0]} rotation={[Math.PI, 0, 0]}>
                 <coneGeometry 
                   args={[
                     // Base radius depends on aperture angle (in radians)
