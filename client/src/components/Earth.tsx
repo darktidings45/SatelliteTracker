@@ -122,8 +122,14 @@ const Earth = () => {
       roughnessMap: earthTextures.specular,
       roughness: 0.7 * (2 - mapDetail), // Higher detail = lower roughness
       metalness: 0.2 * mapDetail,       // Higher detail = higher metalness
-      displacementScale: 0.05 * mapDetail, // Adjust displacement based on detail level
     });
+    
+    console.log("Map detail level:", mapDetail);
+    
+    // Set material properties that affect detail level
+    material.wireframe = mapDetail < 0.7;
+    material.flatShading = mapDetail < 1.0;
+    
     return material;
   }, [earthTextures, mapStyle, mapDetail]);
   
@@ -255,27 +261,24 @@ const Earth = () => {
                   <meshBasicMaterial color="#ffff00" />
                 </mesh>
                 
-                {/* Then add the cone pointing outward from Earth, at an offset from the surface */}
-                <group position={[0, 0, 0]}>
-                  <mesh 
-                    ref={coneRef} 
-                    rotation={[0, 0, 0]}
-                    position={[0, AVERAGE_EARTH_ALTITUDE, 0]}
-                  >
-                    <coneGeometry 
-                      args={[
-                        // Base radius depends on aperture angle (in radians)
-                        // Use tangent to calculate the radius based on height and angle
-                        EARTH_RADIUS * 1.5 * Math.tan((apertureAngle * Math.PI / 180) / 2), 
-                        EARTH_RADIUS * 3, // Height
-                        32, // Segments
-                        1, // Height segments
-                        true // Open ended
-                      ]} 
-                    />
-                    <primitive object={apertureMaterial} attach="material" />
-                  </mesh>
-                </group>
+                {/* Then add the cone pointing outward from Earth */}
+                <mesh 
+                  ref={coneRef} 
+                  rotation={[Math.PI, 0, 0]} // Rotate to point outward from Earth
+                >
+                  <coneGeometry 
+                    args={[
+                      // Base radius depends on aperture angle (in radians)
+                      // Use tangent to calculate the radius based on height and angle
+                      EARTH_RADIUS * 1.5 * Math.tan((apertureAngle * Math.PI / 180) / 2), 
+                      EARTH_RADIUS * 3, // Height
+                      32, // Segments
+                      1, // Height segments
+                      true // Open ended
+                    ]} 
+                  />
+                  <primitive object={apertureMaterial} attach="material" />
+                </mesh>
               </group>
             </group>
           )}
