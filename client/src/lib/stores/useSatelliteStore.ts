@@ -253,6 +253,16 @@ export const useSatelliteStore = create<SatelliteState>()(
       // Reset to current time
       resetTime: () => {
         set({ currentTime: new Date() });
+      },
+      
+      // Toggle Earth auto-rotation
+      toggleEarthRotation: () => {
+        set(state => ({ autoRotateEarth: !state.autoRotateEarth }));
+      },
+      
+      // Toggle aperture cone visibility
+      toggleApertureCone: () => {
+        set(state => ({ showApertureCone: !state.showApertureCone }));
       }
     };
   })

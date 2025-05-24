@@ -109,7 +109,7 @@ const Earth = () => {
           {/* Aperture cone visualization */}
           {showApertureCone && (
             <group position={userPosition.toArray()}>
-              <mesh ref={coneRef}>
+              <mesh ref={coneRef} rotation={[Math.PI, 0, 0]}>
                 <coneGeometry 
                   args={[
                     EARTH_RADIUS * 2, // Base radius
@@ -118,7 +118,6 @@ const Earth = () => {
                     1, // Height segments
                     true // Open ended
                   ]} 
-                  rotation={[Math.PI, 0, 0]} // Point outward from Earth
                 />
                 <primitive object={apertureMaterial} attach="material" />
               </mesh>

@@ -76,13 +76,13 @@ function App() {
             <Stars />
             
             {/* Lighting */}
-            <ambientLight intensity={1.0} />
+            <ambientLight intensity={1.5} />
             <directionalLight 
               position={[10, 5, 10]} 
-              intensity={3} 
+              intensity={5} 
               castShadow 
             />
-            <pointLight position={[0, 0, 10]} intensity={1.0} color="#ffffff" />
+            <pointLight position={[0, 0, 10]} intensity={2.0} color="#ffffff" />
             
             {/* Earth and satellites */}
             <Suspense fallback={null}>
