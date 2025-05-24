@@ -143,37 +143,30 @@ const Earth = () => {
                 <meshBasicMaterial color="#ffff00" />
               </mesh>
               
-              {/* Custom cone that starts exactly at Earth's surface */}
-              {/* We create a cylindrical cone instead of using the built-in cone geometry */}
-              <group 
-                position={[0, 0, 0]}
-                matrixAutoUpdate={true}
-              >
-                {/* Use a simpler approach for the cone */}
-                <mesh ref={coneRef}>
-                  {useMemo(() => {
-                    // Use built-in ConeGeometry but position it carefully
-                    const height = EARTH_RADIUS * 4;
-                    const baseRadius = height * Math.tan((apertureAngle * Math.PI / 180) / 2);
-                    
-                    // Create cone geometry
-                    const geometry = new THREE.ConeGeometry(
-                      baseRadius,
-                      height,
-                      32,
-                      1,
-                      true
-                    );
-                    
-                    // Move cone so vertex is at origin
-                    geometry.translate(0, height / 2, 0);
-                    
-                    // Rotate to align with direction
-                    geometry.rotateX(Math.PI);
-                    
-                    return <primitive object={geometry} attach="geometry" />;
-                  }, [apertureAngle])}
-                  <primitive object={apertureMaterial} attach="material" />
+              {/* Simpler fixed cone on Earth's surface */}
+              <group position={userPositionData.position.toArray()}>
+                <mesh 
+                  ref={coneRef}
+                  rotation={[Math.PI, 0, 0]}
+                  position={[0, 0, 0]}
+                >
+                  <coneGeometry 
+                    args={[
+                      // Calculate cone width based on aperture angle
+                      EARTH_RADIUS * 2 * Math.tan((apertureAngle * Math.PI / 180) / 2), 
+                      EARTH_RADIUS * 4, // Height
+                      32, // Segments
+                      1, // Height segments
+                      true // Open ended
+                    ]} 
+                  />
+                  <meshBasicMaterial 
+                    color="#f7d794"
+                    transparent={true}
+                    opacity={0.2}
+                    side={THREE.DoubleSide}
+                    depthWrite={false}
+                  />
                 </mesh>
               </group>
             </>
