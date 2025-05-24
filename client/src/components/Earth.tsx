@@ -70,22 +70,15 @@ const Earth = () => {
   const [azimuth, setAzimuth] = useState(0);
   const [elevation, setElevation] = useState(0);
   
-  // Create controls to adjust azimuth and elevation
-  useEffect(() => {
-    // Add keyboard controls for azimuth and elevation
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Arrow keys for azimuth
-      if (e.key === 'ArrowLeft') setAzimuth(prev => (prev - 5) % 360);
-      if (e.key === 'ArrowRight') setAzimuth(prev => (prev + 5) % 360);
-      
-      // Up/Down for elevation
-      if (e.key === 'ArrowUp') setElevation(prev => Math.min(prev + 5, 90));
-      if (e.key === 'ArrowDown') setElevation(prev => Math.max(prev - 5, -90));
-    };
+  // Simple position calculation directly from lat/lon
+  const userPosition = useMemo(() => {
+    if (!userLocation) return null;
     
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    const { latitude, longitude } = userLocation;
+    
+    // Convert to cartesian coordinates
+    return latLonToCartesian(latitude, longitude);
+  }, [userLocation]);
   
   // Use our enhanced cone function with azimuth and elevation
   const coneData = useMemo(() => {
@@ -104,8 +97,47 @@ const Earth = () => {
     );
   }, [userLocation, apertureAngle, azimuth, elevation]);
   
-  // Use the position for other calculations
-  const userPosition = coneData?.position || null;
+  // Create controls to adjust azimuth and elevation
+  useEffect(() => {
+    // Add keyboard controls for azimuth and elevation
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Arrow keys for azimuth
+      if (e.key === 'ArrowLeft') {
+        setAzimuth(prev => {
+          const newValue = (prev - 10) % 360;
+          console.log("Azimuth changed to:", newValue);
+          return newValue;
+        });
+      }
+      if (e.key === 'ArrowRight') {
+        setAzimuth(prev => {
+          const newValue = (prev + 10) % 360;
+          console.log("Azimuth changed to:", newValue);
+          return newValue;
+        });
+      }
+      
+      // Up/Down for elevation
+      if (e.key === 'ArrowUp') {
+        setElevation(prev => {
+          const newValue = Math.min(prev + 10, 90);
+          console.log("Elevation changed to:", newValue);
+          return newValue;
+        });
+      }
+      if (e.key === 'ArrowDown') {
+        setElevation(prev => {
+          const newValue = Math.max(prev - 10, -90);
+          console.log("Elevation changed to:", newValue);
+          return newValue;
+        });
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    console.log("Keyboard controls activated - use arrow keys to adjust cone direction");
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   console.log("Earth rendering, satellites:", satellites.length);
 
@@ -152,13 +184,15 @@ const Earth = () => {
               
               {/* Create a cone oriented using the direction from our enhanced function */}
               <group position={userPosition.toArray()}>
-                {/* Orient the cone using lookAt with the calculated direction */}
+                {/* Orient the cone using the direction vector - updated for every render */}
                 <group 
-                  matrix={new THREE.Matrix4().lookAt(
-                    new THREE.Vector3(0, 0, 0),  // Look from origin 
-                    coneData.direction.clone().multiplyScalar(-1), // Direction (inverted)
-                    new THREE.Vector3(0, 1, 0)   // Up vector
-                  )}
+                  matrixAutoUpdate={false}
+                  matrix={useMemo(() => 
+                    new THREE.Matrix4().lookAt(
+                      new THREE.Vector3(0, 0, 0),  // Look from origin 
+                      coneData.direction.clone().multiplyScalar(-1), // Direction (inverted)
+                      new THREE.Vector3(0, 1, 0)   // Up vector
+                    ), [coneData.direction])}
                 >
                   {/* Cone geometry with its tip at the user position */}
                   <mesh ref={coneRef} position={[0, coneData.height/2, 0]} rotation={[Math.PI, 0, 0]}>
