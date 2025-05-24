@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Sphere, useHelper, useTexture } from '@react-three/drei';
@@ -13,8 +13,9 @@ const Earth = () => {
   const earthRef = useRef<THREE.Group>(null);
   const coneRef = useRef<THREE.Mesh>(null);
   
-  // Track the current map style
+  // Track the current map style and detail level
   const [mapStyle, setMapStyle] = useState<'day' | 'night'>('day');
+  const [mapDetail, setMapDetail] = useState<number>(1.0); // Range from 0.5 (low) to 1.5 (high)
   
   // Get satellites and filter states from store
   const { 
@@ -23,8 +24,24 @@ const Earth = () => {
     userLocation,
     apertureAngle,
     autoRotateEarth,
-    showApertureCone
+    showApertureCone,
+    mapDetail: storeMapDetail,
+    setMapDetail: storeSetMapDetail
   } = useSatelliteStore();
+  
+  // Keep local map detail in sync with store
+  useEffect(() => {
+    if (storeMapDetail !== undefined) {
+      setMapDetail(storeMapDetail);
+    }
+  }, [storeMapDetail]);
+  
+  // Update store when local detail changes
+  useEffect(() => {
+    if (storeSetMapDetail) {
+      storeSetMapDetail(mapDetail);
+    }
+  }, [mapDetail, storeSetMapDetail]);
   
   // Load Earth texture maps
   const earthTextures = useTexture({
@@ -35,14 +52,16 @@ const Earth = () => {
   
   // Earth materials with textures
   const earthMaterial = useMemo(() => {
+    // Apply map detail level by adjusting material properties
     const material = new THREE.MeshStandardMaterial({
       map: mapStyle === 'day' ? earthTextures.day : earthTextures.night,
       roughnessMap: earthTextures.specular,
-      roughness: 0.7,
-      metalness: 0.2,
+      roughness: 0.7 * (2 - mapDetail), // Higher detail = lower roughness
+      metalness: 0.2 * mapDetail,       // Higher detail = higher metalness
+      displacementScale: 0.05 * mapDetail, // Adjust displacement based on detail level
     });
     return material;
-  }, [earthTextures, mapStyle]);
+  }, [earthTextures, mapStyle, mapDetail]);
   
   const atmosphereMaterial = useMemo(() => new THREE.MeshStandardMaterial({
     color: '#84b7de', 

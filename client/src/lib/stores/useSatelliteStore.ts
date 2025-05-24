@@ -31,6 +31,7 @@ interface SatelliteState {
   // Visualization options
   autoRotateEarth: boolean;
   showApertureCone: boolean;
+  mapDetail: number; // Map detail level from 0.5 (low) to 1.5 (high)
   
   // Status
   loading: boolean;
