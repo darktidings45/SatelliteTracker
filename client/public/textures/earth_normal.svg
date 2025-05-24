@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 512">
+  <!-- Normal map for Earth texture -->
+  <defs>
+    <filter id="noise" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" result="noise"/>
+      <feColorMatrix type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0" in="noise" result="coloredNoise"/>
+      <feComposite operator="in" in="coloredNoise" in2="SourceGraphic" result="monoNoise"/>
+    </filter>
+  </defs>
+
+  <!-- Base normal map -->
+  <rect width="1024" height="512" fill="#8080ff"/>
+  
+  <!-- Terrain height variations -->
+  <g filter="url(#noise)">
+    <rect width="1024" height="512" fill="none" stroke="#000" stroke-width="0"/>
+  </g>
+  
+  <!-- Continent elevations (simplified) -->
+  <path d="M200,100 Q350,50 500,150 T800,200 Q600,300 400,250 T200,100" fill="#9090ff" opacity="0.5"/>
+  <path d="M600,350 Q700,320 800,380 T900,400 Q800,450 700,420 T600,350" fill="#9090ff" opacity="0.5"/>
+  <path d="M100,300 Q200,280 300,320 T400,350 Q350,400 250,380 T100,300" fill="#9090ff" opacity="0.5"/>
+</svg>

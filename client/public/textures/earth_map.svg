@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 512">
+  <!-- Simplified Earth texture for demonstration -->
+  <rect width="1024" height="512" fill="#1a5276"/>
+  
+  <!-- Simplified continent shapes -->
+  <path d="M200,100 Q350,50 500,150 T800,200 Q600,300 400,250 T200,100" fill="#27ae60" opacity="0.8"/>
+  <path d="M600,350 Q700,320 800,380 T900,400 Q800,450 700,420 T600,350" fill="#27ae60" opacity="0.8"/>
+  <path d="M100,300 Q200,280 300,320 T400,350 Q350,400 250,380 T100,300" fill="#27ae60" opacity="0.8"/>
+  
+  <!-- Ice caps -->
+  <path d="M0,0 H1024 V80 Q800,60 500,90 T0,70 V0" fill="#ecf0f1" opacity="0.9"/>
+  <path d="M0,512 H1024 V432 Q800,452 500,422 T0,442 V512" fill="#ecf0f1" opacity="0.9"/>
+</svg>
