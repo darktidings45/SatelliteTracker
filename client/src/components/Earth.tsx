@@ -82,17 +82,53 @@ const Earth = () => {
     return coneHeight * Math.tan((apertureAngle * Math.PI / 180) / 2);
   }, [apertureAngle]);
   
-  // Direction from user location (simplified)
+  // Calculate direction vector based on azimuth and elevation
   const coneDirection = useMemo(() => {
     if (!userPosition) return new THREE.Vector3(0, 1, 0);
     
-    // Start with the surface normal
+    // Start with the surface normal (points directly outward from Earth center)
     const normal = userPosition.clone().normalize();
     
-    // This is a simplified version that just returns the normal
-    // In a full implementation, we'd apply azimuth and elevation rotations
-    return normal;
-  }, [userPosition]);
+    // Convert azimuth and elevation to radians
+    const azimuthRad = azimuth * Math.PI / 180;
+    const elevationRad = elevation * Math.PI / 180;
+    
+    // Create a local coordinate system at the surface point
+    // 1. Use the normal as "up" vector
+    const up = normal;
+    
+    // 2. Create perpendicular vectors to form a basis
+    // Start with any vector that's not parallel to normal
+    const temp = Math.abs(normal.y) > 0.99 ? 
+      new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
+    
+    // East direction (perpendicular to normal)
+    const east = new THREE.Vector3().crossVectors(up, temp).normalize();
+    
+    // North direction (perpendicular to both east and up)
+    const north = new THREE.Vector3().crossVectors(east, up).normalize();
+    
+    // Create the rotated direction vector
+    // Start with the normal direction
+    const direction = normal.clone();
+    
+    // Apply elevation rotation (in the north-up plane)
+    if (elevationRad !== 0) {
+      // Rotate around east axis by elevation angle
+      const q1 = new THREE.Quaternion().setFromAxisAngle(east, -elevationRad);
+      direction.applyQuaternion(q1);
+    }
+    
+    // Apply azimuth rotation (around normal axis)
+    if (azimuthRad !== 0) {
+      // Rotate around normal axis by azimuth angle
+      const q2 = new THREE.Quaternion().setFromAxisAngle(normal, azimuthRad);
+      direction.applyQuaternion(q2);
+    }
+    
+    // Return the final direction
+    return direction;
+  }, [userPosition, azimuth, elevation]);
   
   // Set up keyboard controls
   useEffect(() => {
@@ -159,26 +195,40 @@ const Earth = () => {
                 <meshBasicMaterial color="#ffff00" />
               </mesh>
               
-              {/* Create a cone oriented using the direction vector */}
+              {/* Create a cone that follows the direction vector */}
               <group position={userPosition.toArray()}>
-                <mesh ref={coneRef} position={[0, 0, 0]}>
-                  <coneGeometry 
-                    args={[
-                      coneBaseRadius,
-                      coneHeight,
-                      32, // Segments
-                      1, // Height segments
-                      true // Open ended
-                    ]} 
-                  />
-                  <meshBasicMaterial 
-                    color="#f7d794"
-                    transparent={true}
-                    opacity={0.2}
-                    side={THREE.DoubleSide}
-                    depthWrite={false}
-                  />
-                </mesh>
+                {/* Create a group that aligns with the direction vector */}
+                <group
+                  matrixAutoUpdate={false}
+                  matrix={
+                    // Create a matrix that orients the cone along the direction vector
+                    new THREE.Matrix4().lookAt(
+                      new THREE.Vector3(0, 0, 0), // Look from origin
+                      coneDirection.clone().multiplyScalar(-1), // Look towards direction (inverted)
+                      new THREE.Vector3(0, 1, 0) // Up vector
+                    )
+                  }
+                >
+                  {/* The cone with its tip at the origin pointing outward */}
+                  <mesh ref={coneRef} position={[0, coneHeight/2, 0]} rotation={[Math.PI, 0, 0]}>
+                    <coneGeometry 
+                      args={[
+                        coneBaseRadius,
+                        coneHeight,
+                        32, // Segments
+                        1, // Height segments
+                        true // Open ended
+                      ]} 
+                    />
+                    <meshBasicMaterial 
+                      color="#f7d794"
+                      transparent={true}
+                      opacity={0.2}
+                      side={THREE.DoubleSide}
+                      depthWrite={false}
+                    />
+                  </mesh>
+                </group>
               </group>
               
               {/* Direction indicator and current values */}
