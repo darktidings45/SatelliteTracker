@@ -9,7 +9,7 @@ export interface GeoLocation {
 export function useGeolocation() {
   const [locationError, setLocationError] = useState<string | null>(null);
   
-  // Request user's geolocation
+  // Request user's geolocation with improved error handling
   const getLocation = (): Promise<GeoLocation | null> => {
     return new Promise((resolve) => {
       setLocationError(null);
@@ -17,11 +17,16 @@ export function useGeolocation() {
       // Check if geolocation is available
       if (!navigator.geolocation) {
         setLocationError("Geolocation is not supported by your browser");
-        resolve(null);
+        // Fallback to a default location (New York City)
+        const defaultLocation: GeoLocation = {
+          latitude: 40.7128,
+          longitude: -74.0060
+        };
+        resolve(defaultLocation);
         return;
       }
       
-      // Request current position
+      // Request current position with better options
       navigator.geolocation.getCurrentPosition(
         // Success callback
         (position) => {
@@ -31,6 +36,7 @@ export function useGeolocation() {
             accuracy: position.coords.accuracy
           };
           
+          console.log("Geolocation obtained successfully:", location);
           resolve(location);
         },
         // Error callback
@@ -39,27 +45,35 @@ export function useGeolocation() {
           
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMessage = "Location access was denied by the user";
+              errorMessage = "Location access was denied. Please enable location permissions in your browser.";
               break;
             case error.POSITION_UNAVAILABLE:
-              errorMessage = "Location information is unavailable";
+              errorMessage = "Location information is unavailable. Try using manual coordinates instead.";
               break;
             case error.TIMEOUT:
-              errorMessage = "Location request timed out";
+              errorMessage = "Location request timed out. Please try again.";
               break;
             default:
-              errorMessage = "An unknown error occurred";
+              errorMessage = "An unknown error occurred while getting your location.";
               break;
           }
           
+          console.error("Geolocation error:", errorMessage, error);
           setLocationError(errorMessage);
-          resolve(null);
+          
+          // When running in a Replit environment, geolocation might not work
+          // Fallback to a default location (New York City)
+          const defaultLocation: GeoLocation = {
+            latitude: 40.7128,
+            longitude: -74.0060
+          };
+          resolve(defaultLocation);
         },
-        // Options
+        // Options - increased timeout and better accuracy settings
         {
-          enableHighAccuracy: false,
-          timeout: 5000,
-          maximumAge: 300000 // 5 minutes
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000 // 1 minute
         }
       );
     });
