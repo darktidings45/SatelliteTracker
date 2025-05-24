@@ -33,41 +33,8 @@ const Satellite = ({
     return calculateSatellitePosition(satellite.tle, currentTime);
   }, [satellite.tle, currentTime]);
   
-  // Absolute most precise cone-point intersection detection
-  const isInCone = useMemo(() => {
-    // If no user position or cone direction, it's not in any cone
-    if (!userPosition || !coneDirection) return false;
-    
-    // Vector from cone apex (user position) to satellite
-    const apexToPoint = new THREE.Vector3(
-      position.x - userPosition.x,
-      position.y - userPosition.y,
-      position.z - userPosition.z
-    );
-    
-    // 1. First check: Is the satellite in front of the cone apex along the cone axis?
-    // Project the apex-to-point vector onto the cone axis
-    const projectionLength = apexToPoint.dot(coneDirection);
-    
-    // If projection is negative or zero, satellite is behind or at the cone's apex
-    if (projectionLength <= 0) return false;
-    
-    // 2. Calculate the distance from the point to the cone axis
-    // Project vector onto axis to get closest point on axis
-    const projectedPoint = coneDirection.clone().multiplyScalar(projectionLength);
-    // Vector from projection on axis to the actual point
-    const perpendicular = new THREE.Vector3().subVectors(apexToPoint, projectedPoint);
-    // Distance from point to axis
-    const distanceToAxis = perpendicular.length();
-    
-    // 3. Calculate cone radius at the projection distance
-    // (distance from apex along cone axis)
-    const halfAngleRadians = (apertureAngle / 2) * (Math.PI / 180);
-    const radiusAtDistance = projectionLength * Math.tan(halfAngleRadians);
-    
-    // 4. Point is inside cone if its distance to axis is less than cone radius at that distance
-    return distanceToAxis <= radiusAtDistance;
-  }, [userPosition, position, apertureAngle, coneDirection]);
+  // Temporarily disabled cone detection - remove red highlighting
+  const isInCone = false;
   
   // Satellite color based on type/purpose
   const satelliteColor = useMemo(() => {
@@ -106,7 +73,7 @@ const Satellite = ({
   // Check if this satellite is currently selected
   const isSelected = selectedSatellite?.id === satellite.id;
   
-  // Pulse effect for selected satellites
+  // Pulse effect for selected satellites only
   useFrame(({ clock }) => {
     if (meshRef.current) {
       if (isSelected) {
@@ -117,15 +84,8 @@ const Satellite = ({
           SATELLITE_SCALE * pulse,
           SATELLITE_SCALE * pulse
         );
-      } else if (isInCone) {
-        // Slightly larger scale for satellites in the cone
-        meshRef.current.scale.set(
-          SATELLITE_SCALE * 1.2,
-          SATELLITE_SCALE * 1.2,
-          SATELLITE_SCALE * 1.2
-        );
       } else {
-        // Normal scale for other satellites
+        // Normal scale for all other satellites
         meshRef.current.scale.set(
           SATELLITE_SCALE,
           SATELLITE_SCALE,
@@ -158,12 +118,12 @@ const Satellite = ({
         />
       </Sphere>
       
-      {/* Glow effect - red highlight for satellites in the cone */}
-      <Sphere args={[0.3, 8, 8]} scale={SATELLITE_SCALE * (isInCone ? 1.5 : 1.2)}>
+      {/* Standard glow effect for all satellites */}
+      <Sphere args={[0.3, 8, 8]} scale={SATELLITE_SCALE * 1.2}>
         <meshBasicMaterial 
-          color={isInCone ? "#ff3333" : satelliteColor} 
+          color={satelliteColor} 
           transparent={true} 
-          opacity={isInCone ? 0.4 : 0.15} 
+          opacity={0.15} 
         />
       </Sphere>
       

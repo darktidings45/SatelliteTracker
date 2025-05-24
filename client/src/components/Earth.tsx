@@ -230,9 +230,10 @@ const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => 
                     <meshBasicMaterial 
                       color="#f7d794"
                       transparent={true}
-                      opacity={0.2}
+                      opacity={0.3}
                       side={THREE.DoubleSide}
                       depthWrite={false}
+                      wireframe={true}
                     />
                   </mesh>
                 </group>
