@@ -8,13 +8,16 @@ import { EARTH_RADIUS } from '../lib/consts';
 
 const Earth = () => {
   const earthRef = useRef<THREE.Group>(null);
+  const coneRef = useRef<THREE.Mesh>(null);
   
   // Get satellites and filter states from store
   const { 
     satellites, 
     currentTime, 
     userLocation,
-    apertureAngle
+    apertureAngle,
+    autoRotateEarth,
+    showApertureCone
   } = useSatelliteStore();
   
   // Earth materials
@@ -40,8 +43,13 @@ const Earth = () => {
     side: THREE.BackSide,
   }), []);
   
-  // Get auto-rotation state from store
-  const { autoRotateEarth } = useSatelliteStore();
+  // Create aperture cone material for visualization
+  const apertureMaterial = useMemo(() => new THREE.MeshBasicMaterial({
+    color: '#f7d794',
+    transparent: true,
+    opacity: 0.2,
+    side: THREE.DoubleSide,
+  }), []);
   
   // Rotate the earth if auto-rotation is enabled
   useFrame(({ clock }) => {

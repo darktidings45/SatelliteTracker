@@ -10,7 +10,11 @@ const TimeControls = () => {
     setTimeMultiplier,
     isPaused,
     togglePaused,
-    resetTime
+    resetTime,
+    autoRotateEarth,
+    toggleEarthRotation,
+    showApertureCone,
+    toggleApertureCone
   } = useSatelliteStore();
   
   const [isExpanded, setIsExpanded] = useState(true);
@@ -83,6 +87,38 @@ const TimeControls = () => {
       
       {isExpanded && (
         <div className="mt-3">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex gap-2">
+              <button
+                onClick={toggleEarthRotation}
+                className={cn(
+                  "px-2 py-1 text-xs rounded",
+                  "transition-colors duration-200",
+                  autoRotateEarth 
+                    ? "bg-[#30718d] text-white" 
+                    : "bg-[#1a2634] text-[#b2bec3] hover:bg-[#233246]"
+                )}
+                title="Toggle Earth auto-rotation"
+              >
+                {autoRotateEarth ? "Earth Rotation: ON" : "Earth Rotation: OFF"}
+              </button>
+              
+              <button
+                onClick={toggleApertureCone}
+                className={cn(
+                  "px-2 py-1 text-xs rounded",
+                  "transition-colors duration-200",
+                  showApertureCone 
+                    ? "bg-[#30718d] text-white" 
+                    : "bg-[#1a2634] text-[#b2bec3] hover:bg-[#233246]"
+                )}
+                title="Toggle aperture cone visualization"
+              >
+                {showApertureCone ? "Aperture Cone: ON" : "Aperture Cone: OFF"}
+              </button>
+            </div>
+          </div>
+          
           <div className="flex justify-between items-center mb-1">
             <h3 className="text-xs font-semibold text-[#3498db]">Simulation Speed</h3>
             <span className="text-xs text-[#b2bec3]">{timeMultiplier}x</span>

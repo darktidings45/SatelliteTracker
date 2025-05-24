@@ -142,6 +142,8 @@ export const useSatelliteStore = create<SatelliteState>()(
       currentTime: new Date(),
       timeMultiplier: 1,
       isPaused: false,
+      autoRotateEarth: false,
+      showApertureCone: true,
       loading: false,
       error: null,
       
