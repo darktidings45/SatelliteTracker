@@ -82,7 +82,7 @@ const Controls = () => {
       ref={controlsRef}
       minDistance={EARTH_RADIUS * 1.1} // Minimum zoom distance
       maxDistance={100} // Maximum zoom distance
-      dampingFactor={0.05} // Smoothing factor
+      smoothTime={0.3} // Smoothing time in seconds (replaces dampingFactor)
       rotateSpeed={0.5} // Rotation speed
     />
   );
