@@ -195,11 +195,7 @@ const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => 
           {/* Simplified aperture cone with azimuth/elevation controls */}
           {showApertureCone && userPosition && (
             <>
-              {/* Yellow marker to show exact location on Earth's surface */}
-              <mesh position={userPosition.toArray()}>
-                <sphereGeometry args={[0.15, 16, 16]} />
-                <meshBasicMaterial color="#ffff00" />
-              </mesh>
+              {/* Location marker removed as requested */}
               
               {/* Create a cone that follows the direction vector */}
               <group position={userPosition.toArray()}>
