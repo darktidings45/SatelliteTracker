@@ -95,15 +95,66 @@ const FilterPanel = () => {
                 onClick={handleGetLocation}
                 className="bg-[#30718d] hover:bg-[#3498db] text-white py-2 px-4 rounded text-sm transition-colors"
               >
-                {userLocation ? 'Update My Location' : 'Use My Location'}
+                {userLocation ? 'Update My Location' : 'Use Browser Location'}
               </button>
               
               {locationError && (
                 <p className="text-xs text-[#e74c3c]">{locationError}</p>
               )}
               
+              <div className="mt-2">
+                <h4 className="text-xs font-semibold mb-1 text-[#b2bec3]">Manual Location Entry</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label htmlFor="latitude" className="text-xs text-[#b2bec3]">Latitude</label>
+                    <input
+                      id="latitude"
+                      type="number"
+                      min="-90"
+                      max="90"
+                      step="0.0001"
+                      placeholder="e.g. 40.7128"
+                      value={userLocation?.latitude || ''}
+                      onChange={(e) => {
+                        const lat = parseFloat(e.target.value);
+                        if (!isNaN(lat) && lat >= -90 && lat <= 90) {
+                          setUserLocation({
+                            latitude: lat,
+                            longitude: userLocation?.longitude || 0
+                          });
+                        }
+                      }}
+                      className="w-full px-2 py-1 bg-[#1a2634] text-white rounded text-xs border border-[#34495e]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="longitude" className="text-xs text-[#b2bec3]">Longitude</label>
+                    <input
+                      id="longitude"
+                      type="number"
+                      min="-180"
+                      max="180"
+                      step="0.0001"
+                      placeholder="e.g. -74.0060"
+                      value={userLocation?.longitude || ''}
+                      onChange={(e) => {
+                        const lon = parseFloat(e.target.value);
+                        if (!isNaN(lon) && lon >= -180 && lon <= 180) {
+                          setUserLocation({
+                            latitude: userLocation?.latitude || 0,
+                            longitude: lon
+                          });
+                        }
+                      }}
+                      className="w-full px-2 py-1 bg-[#1a2634] text-white rounded text-xs border border-[#34495e]"
+                    />
+                  </div>
+                </div>
+              </div>
+              
               {userLocation && (
-                <div className="text-xs mt-1">
+                <div className="text-xs mt-1 bg-[#1a2634] p-2 rounded">
+                  <p>Current Location:</p>
                   <p>Lat: {userLocation.latitude.toFixed(4)}</p>
                   <p>Lon: {userLocation.longitude.toFixed(4)}</p>
                 </div>
