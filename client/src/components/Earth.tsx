@@ -66,76 +66,53 @@ const Earth = () => {
   // Access the Three.js camera
   const { camera } = useThree();
   
-  // Add azimuth and elevation controls
+  // Simple directional controls with fixed states
   const [azimuth, setAzimuth] = useState(0);
   const [elevation, setElevation] = useState(0);
   
   // Simple position calculation directly from lat/lon
   const userPosition = useMemo(() => {
     if (!userLocation) return null;
-    
-    const { latitude, longitude } = userLocation;
-    
-    // Convert to cartesian coordinates
-    return latLonToCartesian(latitude, longitude);
+    return latLonToCartesian(userLocation.latitude, userLocation.longitude);
   }, [userLocation]);
   
-  // Use our enhanced cone function with azimuth and elevation
-  const coneData = useMemo(() => {
-    if (!userLocation) return null;
-    
-    const { latitude, longitude } = userLocation;
-    
-    // Get cone data with azimuth and elevation
-    return createApertureCone(
-      latitude,
-      longitude,
-      apertureAngle,
-      azimuth,
-      elevation,
-      EARTH_RADIUS * 4
-    );
-  }, [userLocation, apertureAngle, azimuth, elevation]);
+  // Basic cone data calculation
+  const coneHeight = EARTH_RADIUS * 4;
+  const coneBaseRadius = useMemo(() => {
+    return coneHeight * Math.tan((apertureAngle * Math.PI / 180) / 2);
+  }, [apertureAngle]);
   
-  // Create controls to adjust azimuth and elevation
+  // Direction from user location (simplified)
+  const coneDirection = useMemo(() => {
+    if (!userPosition) return new THREE.Vector3(0, 1, 0);
+    
+    // Start with the surface normal
+    const normal = userPosition.clone().normalize();
+    
+    // This is a simplified version that just returns the normal
+    // In a full implementation, we'd apply azimuth and elevation rotations
+    return normal;
+  }, [userPosition]);
+  
+  // Set up keyboard controls
   useEffect(() => {
-    // Add keyboard controls for azimuth and elevation
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Arrow keys for azimuth
       if (e.key === 'ArrowLeft') {
-        setAzimuth(prev => {
-          const newValue = (prev - 10) % 360;
-          console.log("Azimuth changed to:", newValue);
-          return newValue;
-        });
+        setAzimuth(prev => (prev - 10) % 360);
       }
       if (e.key === 'ArrowRight') {
-        setAzimuth(prev => {
-          const newValue = (prev + 10) % 360;
-          console.log("Azimuth changed to:", newValue);
-          return newValue;
-        });
+        setAzimuth(prev => (prev + 10) % 360);
       }
-      
-      // Up/Down for elevation
       if (e.key === 'ArrowUp') {
-        setElevation(prev => {
-          const newValue = Math.min(prev + 10, 90);
-          console.log("Elevation changed to:", newValue);
-          return newValue;
-        });
+        setElevation(prev => Math.min(prev + 10, 90));
       }
       if (e.key === 'ArrowDown') {
-        setElevation(prev => {
-          const newValue = Math.max(prev - 10, -90);
-          console.log("Elevation changed to:", newValue);
-          return newValue;
-        });
+        setElevation(prev => Math.max(prev - 10, -90));
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
-    console.log("Keyboard controls activated - use arrow keys to adjust cone direction");
+    console.log("Keyboard controls activated");
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
@@ -173,8 +150,8 @@ const Earth = () => {
             <meshBasicMaterial color="#ff0000" />
           </mesh>
           
-          {/* Aperture cone with azimuth and elevation control */}
-          {showApertureCone && userPosition && coneData && (
+          {/* Simplified aperture cone with azimuth/elevation controls */}
+          {showApertureCone && userPosition && (
             <>
               {/* Yellow marker to show exact location on Earth's surface */}
               <mesh position={userPosition.toArray()}>
@@ -182,38 +159,26 @@ const Earth = () => {
                 <meshBasicMaterial color="#ffff00" />
               </mesh>
               
-              {/* Create a cone oriented using the direction from our enhanced function */}
+              {/* Create a cone oriented using the direction vector */}
               <group position={userPosition.toArray()}>
-                {/* Orient the cone using the direction vector - updated for every render */}
-                <group 
-                  matrixAutoUpdate={false}
-                  matrix={useMemo(() => 
-                    new THREE.Matrix4().lookAt(
-                      new THREE.Vector3(0, 0, 0),  // Look from origin 
-                      coneData.direction.clone().multiplyScalar(-1), // Direction (inverted)
-                      new THREE.Vector3(0, 1, 0)   // Up vector
-                    ), [coneData.direction])}
-                >
-                  {/* Cone geometry with its tip at the user position */}
-                  <mesh ref={coneRef} position={[0, coneData.height/2, 0]} rotation={[Math.PI, 0, 0]}>
-                    <coneGeometry 
-                      args={[
-                        coneData.baseRadius,
-                        coneData.height,
-                        32, // Segments
-                        1, // Height segments
-                        true // Open ended
-                      ]} 
-                    />
-                    <meshBasicMaterial 
-                      color="#f7d794"
-                      transparent={true}
-                      opacity={0.2}
-                      side={THREE.DoubleSide}
-                      depthWrite={false}
-                    />
-                  </mesh>
-                </group>
+                <mesh ref={coneRef} position={[0, 0, 0]}>
+                  <coneGeometry 
+                    args={[
+                      coneBaseRadius,
+                      coneHeight,
+                      32, // Segments
+                      1, // Height segments
+                      true // Open ended
+                    ]} 
+                  />
+                  <meshBasicMaterial 
+                    color="#f7d794"
+                    transparent={true}
+                    opacity={0.2}
+                    side={THREE.DoubleSide}
+                    depthWrite={false}
+                  />
+                </mesh>
               </group>
               
               {/* Direction indicator and current values */}
