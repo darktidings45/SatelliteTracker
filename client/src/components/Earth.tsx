@@ -1,7 +1,7 @@
 import { useRef, useMemo } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
-import { Sphere } from '@react-three/drei';
+import { Sphere, useHelper } from '@react-three/drei';
 import { useSatelliteStore } from '../lib/stores/useSatelliteStore';
 import Satellite from './Satellite';
 import { EARTH_RADIUS } from '../lib/consts';
@@ -40,9 +40,12 @@ const Earth = () => {
     side: THREE.BackSide,
   }), []);
   
-  // Rotate the earth slowly
+  // Get auto-rotation state from store
+  const { autoRotateEarth } = useSatelliteStore();
+  
+  // Rotate the earth if auto-rotation is enabled
   useFrame(({ clock }) => {
-    if (earthRef.current) {
+    if (earthRef.current && autoRotateEarth) {
       earthRef.current.rotation.y = clock.getElapsedTime() * 0.05;
     }
   });

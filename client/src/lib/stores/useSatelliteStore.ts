@@ -28,6 +28,10 @@ interface SatelliteState {
   timeMultiplier: number;
   isPaused: boolean;
   
+  // Visualization options
+  autoRotateEarth: boolean;
+  showApertureCone: boolean;
+  
   // Status
   loading: boolean;
   error: string | null;
@@ -42,6 +46,8 @@ interface SatelliteState {
   setTimeMultiplier: (multiplier: number) => void;
   togglePaused: () => void;
   resetTime: () => void;
+  toggleEarthRotation: () => void;
+  toggleApertureCone: () => void;
 }
 
 // Utility functions moved from useSatellites hook
