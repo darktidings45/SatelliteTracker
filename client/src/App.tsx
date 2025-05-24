@@ -61,7 +61,7 @@ function App() {
           <Canvas
             shadows
             camera={{
-              position: [0, 20, 35],
+              position: [0, 0, 35],
               fov: 45,
               near: 0.1,
               far: 1000
@@ -76,13 +76,13 @@ function App() {
             <Stars />
             
             {/* Lighting */}
-            <ambientLight intensity={0.5} />
+            <ambientLight intensity={1.0} />
             <directionalLight 
-              position={[50, 30, 50]} 
-              intensity={2} 
+              position={[10, 5, 10]} 
+              intensity={3} 
               castShadow 
             />
-            <pointLight position={[10, 10, 10]} intensity={0.5} />
+            <pointLight position={[0, 0, 10]} intensity={1.0} color="#ffffff" />
             
             {/* Earth and satellites */}
             <Suspense fallback={null}>

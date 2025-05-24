@@ -26,11 +26,12 @@ export function calculateSatellitePosition(
     const { position } = positionAndVelocity;
     
     // Convert from km to Three.js units
-    // Satellite.js uses z-up, we use y-up
+    // Scale down to scene units and convert from z-up to y-up
+    const scaleFactor = EARTH_RADIUS / 6371; // Convert from km to scene units
     return new THREE.Vector3(
-      position.x,
-      position.z,
-      position.y
+      position.x * scaleFactor,
+      position.z * scaleFactor,
+      position.y * scaleFactor
     );
     
   } catch (error) {

@@ -1,5 +1,5 @@
-// Earth radius in kilometers
-export const EARTH_RADIUS = 6371;
+// Earth radius in scene units (scaled down from actual kilometers)
+export const EARTH_RADIUS = 10;
 
 // Visual scale factor for satellites (makes them visible)
 export const SATELLITE_SCALE = 1.5;
