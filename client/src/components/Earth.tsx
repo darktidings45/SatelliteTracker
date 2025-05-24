@@ -1,13 +1,11 @@
-import { useRef, useMemo, useState } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Sphere, useHelper, useTexture } from '@react-three/drei';
 import { useSatelliteStore } from '../lib/stores/useSatelliteStore';
 import Satellite from './Satellite';
 import { EARTH_RADIUS } from '../lib/consts';
-
-// Constants for cone positioning
-// No altitude offset needed - we'll use a direct calculation
+import { createApertureCone, latLonToCartesian, getNormalAtLatLon } from '../lib/utils';
 
 const Earth = () => {
   const earthRef = useRef<THREE.Group>(null);
@@ -65,40 +63,31 @@ const Earth = () => {
     }
   });
 
-  // Convert user's latitude/longitude to a 3D position for filtering
-  const userPositionData = useMemo(() => {
+  // Calculate user position and cone data using our improved utility functions
+  const coneData = useMemo(() => {
     if (!userLocation) return null;
     
     const { latitude, longitude } = userLocation;
     
-    // Convert to radians
-    const latRad = latitude * (Math.PI / 180);
-    const lonRad = longitude * (Math.PI / 180);
+    // Get cone data (position, orientation, dimensions)
+    const cone = createApertureCone(
+      latitude,
+      longitude,
+      apertureAngle,
+      EARTH_RADIUS * 4
+    );
     
-    // Convert to cartesian coordinates on Earth's surface
-    const x = EARTH_RADIUS * Math.cos(latRad) * Math.cos(lonRad);
-    const y = EARTH_RADIUS * Math.sin(latRad);
-    const z = EARTH_RADIUS * Math.cos(latRad) * Math.sin(lonRad);
-    
-    // Calculate surface normal at this position (points outward from Earth center)
-    const position = new THREE.Vector3(x, y, z);
-    const normal = position.clone().normalize();
-    
-    // Create a rotation matrix to orient objects along this normal vector
-    const quaternion = new THREE.Quaternion();
-    // Default cone points in negative Y direction, we want to align with the normal
-    const upVector = new THREE.Vector3(0, 1, 0);
-    quaternion.setFromUnitVectors(upVector, normal);
+    // Get user position for other calculations
+    const userPosition = latLonToCartesian(latitude, longitude);
     
     return {
-      position,
-      normal,
-      quaternion
+      ...cone,
+      userPosition
     };
-  }, [userLocation]);
+  }, [userLocation, apertureAngle]);
   
-  // Extract the position vector for use elsewhere
-  const userPosition = userPositionData?.position || null;
+  // Extract user position for visibility calculations
+  const userPosition = coneData?.userPosition || null;
 
   console.log("Earth rendering, satellites:", satellites.length);
 
@@ -134,27 +123,25 @@ const Earth = () => {
             <meshBasicMaterial color="#ff0000" />
           </mesh>
           
-          {/* Aperture cone visualization */}
-          {showApertureCone && userPositionData && (
+          {/* Aperture cone visualization using our improved positioning */}
+          {showApertureCone && coneData && (
             <>
               {/* Yellow marker to show exact location on Earth's surface */}
-              <mesh position={userPositionData.position.toArray()}>
+              <mesh position={coneData.position.toArray()}>
                 <sphereGeometry args={[0.15, 16, 16]} />
                 <meshBasicMaterial color="#ffff00" />
               </mesh>
               
-              {/* Simpler fixed cone on Earth's surface */}
-              <group position={userPositionData.position.toArray()}>
-                <mesh 
-                  ref={coneRef}
-                  rotation={[Math.PI, 0, 0]}
-                  position={[0, 0, 0]}
-                >
+              {/* Cone with proper orientation and position from calculated data */}
+              <group 
+                position={coneData.position.toArray()}
+                quaternion={coneData.quaternion}
+              >
+                <mesh ref={coneRef}>
                   <coneGeometry 
                     args={[
-                      // Calculate cone width based on aperture angle
-                      EARTH_RADIUS * 2 * Math.tan((apertureAngle * Math.PI / 180) / 2), 
-                      EARTH_RADIUS * 4, // Height
+                      coneData.baseRadius,
+                      coneData.height,
                       32, // Segments
                       1, // Height segments
                       true // Open ended
@@ -167,6 +154,12 @@ const Earth = () => {
                     side={THREE.DoubleSide}
                     depthWrite={false}
                   />
+                </mesh>
+                
+                {/* Visualization of the cone direction */}
+                <mesh position={[0, 1, 0]} scale={0.1}>
+                  <sphereGeometry />
+                  <meshBasicMaterial color="red" />
                 </mesh>
               </group>
             </>
