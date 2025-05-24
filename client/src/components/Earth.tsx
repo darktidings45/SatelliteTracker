@@ -7,7 +7,14 @@ import Satellite from './Satellite';
 import { EARTH_RADIUS } from '../lib/consts';
 import { createApertureCone, latLonToCartesian, getNormalAtLatLon } from '../lib/utils';
 
-const Earth = () => {
+interface EarthProps {
+  azimuth: number;
+  elevation: number;
+  setAzimuth: (value: number) => void;
+  setElevation: (value: number) => void;
+}
+
+const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => {
   const earthRef = useRef<THREE.Group>(null);
   const coneRef = useRef<THREE.Mesh>(null);
   
@@ -66,9 +73,7 @@ const Earth = () => {
   // Access the Three.js camera
   const { camera } = useThree();
   
-  // Simple directional controls with fixed states
-  const [azimuth, setAzimuth] = useState(0);
-  const [elevation, setElevation] = useState(0);
+  // Direction controls now passed as props
   
   // Simple position calculation directly from lat/lon
   const userPosition = useMemo(() => {
@@ -130,27 +135,28 @@ const Earth = () => {
     return direction;
   }, [userPosition, azimuth, elevation]);
   
-  // Set up keyboard controls
+  // Set up keyboard controls for the cone direction
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
-        setAzimuth(prev => (prev - 10) % 360);
+        const newAzimuth = (azimuth - 10) % 360;
+        setAzimuth(newAzimuth < 0 ? newAzimuth + 360 : newAzimuth);
       }
       if (e.key === 'ArrowRight') {
-        setAzimuth(prev => (prev + 10) % 360);
+        setAzimuth((azimuth + 10) % 360);
       }
       if (e.key === 'ArrowUp') {
-        setElevation(prev => Math.min(prev + 10, 90));
+        setElevation(Math.min(elevation + 10, 90));
       }
       if (e.key === 'ArrowDown') {
-        setElevation(prev => Math.max(prev - 10, -90));
+        setElevation(Math.max(elevation - 10, -90));
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     console.log("Keyboard controls activated");
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [azimuth, elevation, setAzimuth, setElevation]);
 
   console.log("Earth rendering, satellites:", satellites.length);
 
