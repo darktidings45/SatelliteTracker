@@ -208,9 +208,10 @@ const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => 
                   matrixAutoUpdate={false}
                   matrix={
                     // Create a matrix that orients the cone along the direction vector
+                    // We want the cone to point FROM the surface outward
                     new THREE.Matrix4().lookAt(
                       new THREE.Vector3(0, 0, 0), // Look from origin
-                      coneDirection.clone().multiplyScalar(-1), // Look towards direction (inverted)
+                      coneDirection, // Look along direction (not inverted)
                       new THREE.Vector3(0, 1, 0) // Up vector
                     )
                   }
