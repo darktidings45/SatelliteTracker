@@ -1,21 +1,13 @@
 import { useRef, useMemo } from 'react';
 import * as THREE from 'three';
-import { useFrame, useLoader } from '@react-three/fiber';
-import { useTexture } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import { Sphere } from '@react-three/drei';
 import { useSatelliteStore } from '../lib/stores/useSatelliteStore';
 import Satellite from './Satellite';
 import { EARTH_RADIUS } from '../lib/consts';
 
 const Earth = () => {
-  const earthRef = useRef<THREE.Mesh>(null);
-  const cloudsRef = useRef<THREE.Mesh>(null);
-  
-  // Load earth textures
-  const [earthMap, earthNormal, cloudMap] = useTexture([
-    '/textures/earth_map.svg',
-    '/textures/earth_normal.svg',
-    '/textures/earth_clouds.svg'
-  ]);
+  const earthRef = useRef<THREE.Group>(null);
   
   // Get satellites and filter states from store
   const { 
@@ -25,34 +17,14 @@ const Earth = () => {
     apertureAngle
   } = useSatelliteStore();
   
-  // Create Earth material with textures
-  const earthMaterial = useMemo(() => {
-    return new THREE.MeshStandardMaterial({
-      map: earthMap,
-      normalMap: earthNormal,
-      metalness: 0.1,
-      roughness: 0.8,
-    });
-  }, [earthMap, earthNormal]);
-
-  // Create clouds material
-  const cloudsMaterial = useMemo(() => {
-    return new THREE.MeshStandardMaterial({
-      map: cloudMap,
-      transparent: true,
-      opacity: 0.4,
-      blending: THREE.AdditiveBlending
-    });
-  }, [cloudMap]);
-
+  // Earth color
+  const earthColor = '#1a5276'; // Deep blue ocean color
+  const landColor = '#27ae60'; // Green land color
+  
   // Rotate the earth slowly
   useFrame(({ clock }) => {
     if (earthRef.current) {
       earthRef.current.rotation.y = clock.getElapsedTime() * 0.05;
-    }
-    
-    if (cloudsRef.current) {
-      cloudsRef.current.rotation.y = clock.getElapsedTime() * 0.055;
     }
   });
 
@@ -75,18 +47,41 @@ const Earth = () => {
   }, [userLocation]);
 
   return (
-    <group>
+    <group ref={earthRef}>
       {/* Earth sphere */}
-      <mesh ref={earthRef} castShadow receiveShadow>
-        <sphereGeometry args={[EARTH_RADIUS, 64, 64]} />
-        {earthMaterial && <primitive object={earthMaterial} attach="material" />}
-      </mesh>
+      <Sphere args={[EARTH_RADIUS, 64, 64]} castShadow receiveShadow>
+        <meshStandardMaterial 
+          color={earthColor}
+          roughness={0.7}
+          metalness={0.2}
+        />
+      </Sphere>
       
-      {/* Cloud layer */}
-      <mesh ref={cloudsRef}>
-        <sphereGeometry args={[EARTH_RADIUS + 0.1, 64, 64]} />
-        {cloudsMaterial && <primitive object={cloudsMaterial} attach="material" />}
-      </mesh>
+      {/* Simple land masses for effect */}
+      <group>
+        {/* Simplified continents */}
+        <mesh position={[0, 0, 0]}>
+          <sphereGeometry args={[EARTH_RADIUS + 0.01, 32, 32]} />
+          <meshStandardMaterial 
+            color={landColor} 
+            transparent={true} 
+            opacity={0.6}
+            roughness={1}
+            metalness={0}
+            wireframe={false} 
+          />
+        </mesh>
+      </group>
+      
+      {/* Atmosphere glow */}
+      <Sphere args={[EARTH_RADIUS + 0.2, 30, 30]}>
+        <meshStandardMaterial 
+          color="#84b7de" 
+          transparent={true} 
+          opacity={0.1} 
+          side={THREE.BackSide}
+        />
+      </Sphere>
       
       {/* Render all satellites */}
       {satellites.map(satellite => (

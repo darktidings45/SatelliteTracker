@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
+import { Html, Sphere } from '@react-three/drei';
 import { SatelliteData } from '../hooks/useSatellites';
 import { useSatelliteStore } from '../lib/stores/useSatelliteStore';
 import { calculateSatellitePosition } from '../lib/satellite-utils';
@@ -77,6 +77,7 @@ const Satellite = ({
         break;
       default:
         // Keep default color for other types
+        color = '#f7d794'; // Yellow for other satellites
         break;
     }
     
@@ -92,47 +93,78 @@ const Satellite = ({
   // Check if this satellite is currently selected
   const isSelected = selectedSatellite?.id === satellite.id;
   
+  // Pulse effect for selected satellites
+  useFrame(({ clock }) => {
+    if (meshRef.current && isSelected) {
+      const pulse = Math.sin(clock.getElapsedTime() * 5) * 0.1 + 1;
+      meshRef.current.scale.set(
+        SATELLITE_SCALE * pulse,
+        SATELLITE_SCALE * pulse,
+        SATELLITE_SCALE * pulse
+      );
+    }
+  });
+  
   // Hide satellites that aren't visible based on user's location/aperture
   if (!isVisible) return null;
   
   return (
     <group position={[position.x, position.y, position.z]}>
-      <mesh 
+      {/* Satellite body */}
+      <Sphere
         ref={meshRef}
+        args={[0.2, 8, 8]}
         onClick={handleClick}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
         scale={SATELLITE_SCALE}
       >
-        <boxGeometry args={[0.2, 0.2, 0.5]} />
         <meshStandardMaterial 
-          color={satelliteColor} 
-          emissive={hovered || isSelected ? satelliteColor : '#000000'}
-          emissiveIntensity={hovered ? 0.5 : isSelected ? 1 : 0}
+          color={satelliteColor}
+          emissive={satelliteColor}
+          emissiveIntensity={hovered ? 0.8 : isSelected ? 1 : 0.5}
         />
-      </mesh>
+      </Sphere>
+      
+      {/* Glow effect */}
+      <Sphere args={[0.3, 8, 8]} scale={SATELLITE_SCALE * 1.2}>
+        <meshBasicMaterial 
+          color={satelliteColor} 
+          transparent={true} 
+          opacity={0.15} 
+        />
+      </Sphere>
       
       {/* Draw orbit line */}
       {isSelected && (
         <line>
           <bufferGeometry attach="geometry" {...satellite.orbitGeometry} />
-          <lineBasicMaterial attach="material" color={satelliteColor} linewidth={1} />
+          <lineBasicMaterial 
+            attach="material" 
+            color={satelliteColor} 
+            linewidth={2}
+            transparent={true}
+            opacity={0.7}
+          />
         </line>
       )}
       
       {/* Show label when hovered */}
       {(hovered || isSelected) && (
         <Html
-          position={[0, 0.5, 0]}
+          position={[0, 0.8, 0]}
           center
           style={{
-            backgroundColor: 'rgba(10, 15, 22, 0.7)',
+            backgroundColor: 'rgba(10, 15, 22, 0.8)',
             padding: '5px 10px',
             borderRadius: '4px',
             color: 'white',
             fontSize: '12px',
             pointerEvents: 'none',
-            whiteSpace: 'nowrap'
+            whiteSpace: 'nowrap',
+            fontFamily: 'Inter, sans-serif',
+            transform: 'scale(1.0)',
+            userSelect: 'none'
           }}
         >
           {satellite.name}
