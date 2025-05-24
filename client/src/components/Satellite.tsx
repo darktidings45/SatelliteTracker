@@ -33,7 +33,7 @@ const Satellite = ({
     return calculateSatellitePosition(satellite.tle, currentTime);
   }, [satellite.tle, currentTime]);
   
-  // Simple cone test with normalization and dot product
+  // Completely reversed approach using the opposite of the cone direction
   const isInCone = useMemo(() => {
     // If no user position or cone direction, it's not in any cone
     if (!userPosition || !coneDirection) return false;
@@ -45,8 +45,11 @@ const Satellite = ({
       position.z - userPosition.z
     ).normalize();
     
+    // Use the OPPOSITE of the cone direction - this inverts our perspective
+    const reversedDirection = coneDirection.clone().multiplyScalar(-1);
+    
     // Get the cosine of the angle between the vectors using dot product
-    const cosAngle = coneDirection.dot(toSatellite);
+    const cosAngle = reversedDirection.dot(toSatellite);
     
     // Convert aperture angle from degrees to radians and get its cosine
     const halfApertureRad = (apertureAngle / 2) * Math.PI / 180;
