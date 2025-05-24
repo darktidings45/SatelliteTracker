@@ -33,26 +33,35 @@ const Satellite = ({
     return calculateSatellitePosition(satellite.tle, currentTime);
   }, [satellite.tle, currentTime]);
   
-  // Determine if this satellite is within the aperture cone (for highlighting)
+  // Determine if this satellite is within the aperture cone using more accurate detection
   const isInCone = useMemo(() => {
     // If no user position or cone direction, it's not in any cone
     if (!userPosition || !coneDirection) return false;
     
-    // Calculate the vector from user position to satellite
+    // Get the vector from user position to satellite
     const toSatellite = new THREE.Vector3(
       position.x - userPosition.x,
       position.y - userPosition.y,
       position.z - userPosition.z
-    ).normalize();
+    );
     
-    // Calculate the angle between cone direction and satellite direction
-    const angle = coneDirection.angleTo(toSatellite);
+    // Project the satellite position onto the cone direction vector
+    const projectionLength = toSatellite.dot(coneDirection);
     
-    // Convert aperture angle from degrees to radians
+    // If projection is negative, satellite is behind the cone origin
+    if (projectionLength <= 0) return false;
+    
+    // Calculate distance from cone axis at the projection point
+    const projectionPoint = coneDirection.clone().multiplyScalar(projectionLength);
+    const distanceVector = toSatellite.clone().sub(projectionPoint);
+    const distanceFromAxis = distanceVector.length();
+    
+    // Calculate the cone radius at the projection distance
     const halfApertureRad = (apertureAngle / 2) * Math.PI / 180;
+    const coneRadiusAtProjection = Math.tan(halfApertureRad) * projectionLength;
     
-    // Check if the satellite is within the aperture cone
-    return angle <= halfApertureRad;
+    // Check if the satellite is within the cone at this distance
+    return distanceFromAxis <= coneRadiusAtProjection;
   }, [userPosition, position, apertureAngle, coneDirection]);
   
   // Satellite color based on type/purpose
