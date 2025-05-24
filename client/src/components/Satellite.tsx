@@ -144,12 +144,12 @@ const Satellite = ({
         />
       </Sphere>
       
-      {/* Glow effect - enhanced for satellites in the cone */}
+      {/* Glow effect - red highlight for satellites in the cone */}
       <Sphere args={[0.3, 8, 8]} scale={SATELLITE_SCALE * (isInCone ? 1.5 : 1.2)}>
         <meshBasicMaterial 
-          color={satelliteColor} 
+          color={isInCone ? "#ff3333" : satelliteColor} 
           transparent={true} 
-          opacity={isInCone ? 0.3 : 0.15} 
+          opacity={isInCone ? 0.4 : 0.15} 
         />
       </Sphere>
       
