@@ -44,32 +44,91 @@ const Earth = () => {
     }
   }, [mapDetail, storeSetMapDetail]);
   
-  // Load Earth texture maps with error handling
+  // Create detailed Earth texture maps
   const earthTextures = useMemo(() => {
     try {
-      // Create a basic color texture as fallback
+      // Create a basic color texture
       const fallbackTexture = new THREE.TextureLoader().load('');
       fallbackTexture.image = { width: 1, height: 1 };
       
-      // Create a canvas to generate a basic Earth texture
+      // Create a canvas to generate a detailed Earth texture with landmass
       const canvas = document.createElement('canvas');
-      canvas.width = 256;
-      canvas.height = 256;
+      canvas.width = 1024; // Higher resolution for more detail
+      canvas.height = 512;
       const ctx = canvas.getContext('2d');
       
       if (ctx) {
-        // Draw day texture (blue with green continents)
+        // Draw day texture with continents
+        // Ocean base
         ctx.fillStyle = '#1a5276'; // Ocean blue
-        ctx.fillRect(0, 0, 256, 256);
+        ctx.fillRect(0, 0, 1024, 512);
         
-        // Add some land masses
+        // Add detailed continents
+        
+        // North America
         ctx.fillStyle = '#27ae60'; // Land green
         ctx.beginPath();
-        ctx.ellipse(100, 100, 40, 60, 0, 0, Math.PI * 2);
+        ctx.moveTo(150, 100);
+        ctx.bezierCurveTo(200, 80, 250, 100, 300, 120);
+        ctx.lineTo(280, 220);
+        ctx.bezierCurveTo(240, 240, 150, 230, 120, 180);
+        ctx.closePath();
         ctx.fill();
+        
+        // South America
         ctx.beginPath();
-        ctx.ellipse(180, 150, 30, 20, 0, 0, Math.PI * 2);
+        ctx.moveTo(280, 230);
+        ctx.bezierCurveTo(300, 260, 310, 300, 280, 350);
+        ctx.bezierCurveTo(250, 380, 220, 350, 230, 300);
+        ctx.bezierCurveTo(230, 270, 240, 230, 280, 230);
+        ctx.closePath();
         ctx.fill();
+        
+        // Europe/Africa
+        ctx.beginPath();
+        ctx.moveTo(450, 100);
+        ctx.bezierCurveTo(480, 110, 520, 120, 500, 180);
+        ctx.bezierCurveTo(510, 220, 500, 300, 460, 350);
+        ctx.bezierCurveTo(430, 330, 410, 280, 420, 230);
+        ctx.bezierCurveTo(380, 180, 410, 120, 450, 100);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Asia/Australia
+        ctx.beginPath();
+        ctx.moveTo(550, 120);
+        ctx.bezierCurveTo(600, 100, 700, 120, 750, 150);
+        ctx.bezierCurveTo(780, 200, 750, 250, 700, 230);
+        ctx.bezierCurveTo(680, 300, 630, 320, 600, 280);
+        ctx.bezierCurveTo(560, 290, 530, 230, 550, 180);
+        ctx.lineTo(550, 120);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Australia
+        ctx.beginPath();
+        ctx.ellipse(700, 320, 50, 30, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Add grid lines for longitude/latitude
+        ctx.strokeStyle = '#3498db';
+        ctx.lineWidth = 1;
+        
+        // Longitude lines
+        for (let i = 0; i < 1024; i += 1024/12) {
+          ctx.beginPath();
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i, 512);
+          ctx.stroke();
+        }
+        
+        // Latitude lines
+        for (let i = 0; i < 512; i += 512/6) {
+          ctx.beginPath();
+          ctx.moveTo(0, i);
+          ctx.lineTo(1024, i);
+          ctx.stroke();
+        }
       }
       
       // Create textures from canvas
@@ -77,39 +136,113 @@ const Earth = () => {
       
       // Night texture (darker version)
       const nightCanvas = document.createElement('canvas');
-      nightCanvas.width = 256;
-      nightCanvas.height = 256;
+      nightCanvas.width = 1024;
+      nightCanvas.height = 512;
       const nightCtx = nightCanvas.getContext('2d');
       
       if (nightCtx) {
+        // Draw the night version with city lights
         nightCtx.fillStyle = '#0a1622'; // Dark ocean
-        nightCtx.fillRect(0, 0, 256, 256);
+        nightCtx.fillRect(0, 0, 1024, 512);
         
-        // Add some land masses
-        nightCtx.fillStyle = '#1e3a29'; // Dark land
-        nightCtx.beginPath();
-        nightCtx.ellipse(100, 100, 40, 60, 0, 0, Math.PI * 2);
-        nightCtx.fill();
-        nightCtx.beginPath();
-        nightCtx.ellipse(180, 150, 30, 20, 0, 0, Math.PI * 2);
-        nightCtx.fill();
+        // Copy the continents from day texture but darker
+        if (ctx) {
+          nightCtx.drawImage(canvas, 0, 0);
+          
+          // Add semi-transparent dark overlay
+          nightCtx.fillStyle = 'rgba(0, 0, 30, 0.7)';
+          nightCtx.fillRect(0, 0, 1024, 512);
+          
+          // Add city lights (small dots)
+          nightCtx.fillStyle = '#ffff80';
+          
+          // North America cities
+          for (let i = 0; i < 20; i++) {
+            const x = 150 + Math.random() * 150;
+            const y = 100 + Math.random() * 120;
+            const size = 1 + Math.random() * 3;
+            nightCtx.beginPath();
+            nightCtx.arc(x, y, size, 0, Math.PI * 2);
+            nightCtx.fill();
+          }
+          
+          // Europe cities
+          for (let i = 0; i < 25; i++) {
+            const x = 450 + Math.random() * 100;
+            const y = 100 + Math.random() * 80;
+            const size = 1 + Math.random() * 3;
+            nightCtx.beginPath();
+            nightCtx.arc(x, y, size, 0, Math.PI * 2);
+            nightCtx.fill();
+          }
+          
+          // Asia cities
+          for (let i = 0; i < 30; i++) {
+            const x = 600 + Math.random() * 150;
+            const y = 150 + Math.random() * 100;
+            const size = 1 + Math.random() * 3;
+            nightCtx.beginPath();
+            nightCtx.arc(x, y, size, 0, Math.PI * 2);
+            nightCtx.fill();
+          }
+        }
       }
       
       const nightTexture = new THREE.CanvasTexture(nightCanvas);
       
+      // Create a specular map for water reflections
+      const specularCanvas = document.createElement('canvas');
+      specularCanvas.width = 1024;
+      specularCanvas.height = 512;
+      const specularCtx = specularCanvas.getContext('2d');
+      
+      if (specularCtx) {
+        // Water is more reflective (white), land is less (dark)
+        specularCtx.fillStyle = '#ffffff'; // Highly reflective ocean
+        specularCtx.fillRect(0, 0, 1024, 512);
+        
+        // Copy the continent shapes from the day map but make them dark (less reflective)
+        if (ctx) {
+          specularCtx.drawImage(canvas, 0, 0);
+          
+          // Make land masses dark (low reflection)
+          specularCtx.fillStyle = 'rgba(20, 20, 20, 0.8)';
+          specularCtx.fillRect(0, 0, 1024, 512);
+          
+          // Keep oceans reflective
+          specularCtx.globalCompositeOperation = 'destination-out';
+          specularCtx.drawImage(canvas, 0, 0);
+          specularCtx.globalCompositeOperation = 'source-over';
+        }
+      }
+      
+      const specularTexture = new THREE.CanvasTexture(specularCanvas);
+      
       return {
         day: dayTexture,
         night: nightTexture,
-        specular: fallbackTexture,
+        specular: specularTexture,
       };
     } catch (error) {
       console.error('Failed to load Earth textures:', error);
-      // Return placeholder textures
-      const fallbackTexture = new THREE.TextureLoader().load('');
+      
+      // Create a simple texture if error
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        ctx.fillStyle = '#1a5276';
+        ctx.fillRect(0, 0, 256, 256);
+      }
+      
+      const simpleTexture = new THREE.CanvasTexture(canvas);
+      
       return {
-        day: fallbackTexture,
-        night: fallbackTexture,
-        specular: fallbackTexture
+        day: simpleTexture,
+        night: simpleTexture,
+        specular: simpleTexture
       };
     }
   }, []);
@@ -253,32 +386,39 @@ const Earth = () => {
               position={userPositionData.position.toArray()}
               quaternion={userPositionData.quaternion}
             >
-              {/* Create a visible cone that sits clearly on the Earth's surface */}
+              {/* Create visible marker and cone */}
               <group>
-                {/* First, create a yellow marker at the exact position on Earth's surface */}
+                {/* Create a larger yellow marker exactly on Earth's surface */}
                 <mesh>
-                  <sphereGeometry args={[0.3, 16, 16]} />
+                  <sphereGeometry args={[0.5, 16, 16]} />
                   <meshBasicMaterial color="#ffff00" />
                 </mesh>
                 
-                {/* Then add the cone pointing outward from Earth */}
-                <mesh 
-                  ref={coneRef} 
-                  rotation={[Math.PI, 0, 0]} // Rotate to point outward from Earth
-                >
-                  <coneGeometry 
-                    args={[
-                      // Base radius depends on aperture angle (in radians)
-                      // Use tangent to calculate the radius based on height and angle
-                      EARTH_RADIUS * 1.5 * Math.tan((apertureAngle * Math.PI / 180) / 2), 
-                      EARTH_RADIUS * 3, // Height
-                      32, // Segments
-                      1, // Height segments
-                      true // Open ended
-                    ]} 
-                  />
-                  <primitive object={apertureMaterial} attach="material" />
+                {/* Create a thin pole extending outward slightly to show direction */}
+                <mesh position={[0, 1, 0]}>
+                  <cylinderGeometry args={[0.1, 0.1, 2, 8]} />
+                  <meshBasicMaterial color="#ff0000" />
                 </mesh>
+                
+                {/* Position cone precisely at the end of the pole */}
+                <group position={[0, 2, 0]}>
+                  <mesh 
+                    ref={coneRef} 
+                    rotation={[0, 0, 0]} 
+                  >
+                    <coneGeometry 
+                      args={[
+                        // Base radius depends on aperture angle
+                        EARTH_RADIUS * Math.tan((apertureAngle * Math.PI / 180) / 2), 
+                        EARTH_RADIUS * 3, // Height
+                        32, // Segments
+                        1, // Height segments
+                        true // Open ended
+                      ]} 
+                    />
+                    <primitive object={apertureMaterial} attach="material" />
+                  </mesh>
+                </group>
               </group>
             </group>
           )}
