@@ -1,7 +1,7 @@
 import { useRef, useMemo, useState, useEffect } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
-import { Sphere, useHelper, useTexture } from '@react-three/drei';
+import { useFrame, useThree } from '@react-three/fiber';
+import { Sphere, useHelper, useTexture, PerspectiveCamera } from '@react-three/drei';
 import { useSatelliteStore } from '../lib/stores/useSatelliteStore';
 import Satellite from './Satellite';
 import { EARTH_RADIUS } from '../lib/consts';
@@ -63,31 +63,40 @@ const Earth = () => {
     }
   });
 
-  // Calculate user position and cone data using our improved utility functions
-  const coneData = useMemo(() => {
+  // Access the Three.js camera
+  const { camera } = useThree();
+  
+  // Simple position calculation directly from lat/lon 
+  const userPosition = useMemo(() => {
     if (!userLocation) return null;
     
     const { latitude, longitude } = userLocation;
     
-    // Get cone data (position, orientation, dimensions)
-    const cone = createApertureCone(
-      latitude,
-      longitude,
-      apertureAngle,
-      EARTH_RADIUS * 4
-    );
+    // Convert to cartesian coordinates
+    return latLonToCartesian(latitude, longitude);
+  }, [userLocation]);
+  
+  // Calculate the normalized direction from Earth center to user position
+  const userDirection = useMemo(() => {
+    if (!userPosition) return null;
+    return userPosition.clone().normalize();
+  }, [userPosition]);
+  
+  // Position a very simple cone directly at the user location
+  const coneProps = useMemo(() => {
+    if (!userPosition || !userDirection) return null;
     
-    // Get user position for other calculations
-    const userPosition = latLonToCartesian(latitude, longitude);
+    // Cone dimensions based on aperture angle
+    const height = EARTH_RADIUS * 4;
+    const baseRadius = height * Math.tan((apertureAngle * Math.PI / 180) / 2);
     
     return {
-      ...cone,
-      userPosition
+      position: userPosition.clone(),
+      direction: userDirection.clone(),
+      height,
+      baseRadius
     };
-  }, [userLocation, apertureAngle]);
-  
-  // Extract user position for visibility calculations
-  const userPosition = coneData?.userPosition || null;
+  }, [userPosition, userDirection, apertureAngle]);
 
   console.log("Earth rendering, satellites:", satellites.length);
 
@@ -123,44 +132,45 @@ const Earth = () => {
             <meshBasicMaterial color="#ff0000" />
           </mesh>
           
-          {/* Aperture cone visualization using our improved positioning */}
-          {showApertureCone && coneData && (
+          {/* Simplified aperture cone visualization */}
+          {showApertureCone && userPosition && userDirection && coneProps && (
             <>
               {/* Yellow marker to show exact location on Earth's surface */}
-              <mesh position={coneData.position.toArray()}>
+              <mesh position={userPosition.toArray()}>
                 <sphereGeometry args={[0.15, 16, 16]} />
                 <meshBasicMaterial color="#ffff00" />
               </mesh>
               
-              {/* Cone with proper orientation and position from calculated data */}
-              <group 
-                position={coneData.position.toArray()}
-                quaternion={coneData.quaternion}
-              >
-                <mesh ref={coneRef} position={[0, coneData.height/2, 0]}>
-                  <coneGeometry 
-                    args={[
-                      coneData.baseRadius,
-                      coneData.height,
-                      32, // Segments
-                      1, // Height segments
-                      true // Open ended
-                    ]} 
-                  />
-                  <meshBasicMaterial 
-                    color="#f7d794"
-                    transparent={true}
-                    opacity={0.2}
-                    side={THREE.DoubleSide}
-                    depthWrite={false}
-                  />
-                </mesh>
-                
-                {/* Visualization of the cone direction */}
-                <mesh position={[0, 1, 0]} scale={0.1}>
-                  <sphereGeometry />
-                  <meshBasicMaterial color="red" />
-                </mesh>
+              {/* Create a cone that always points directly outward from Earth's center */}
+              <group position={userPosition.toArray()}>
+                {/* Create a look-at matrix to orient the cone along the direction vector */}
+                <group 
+                  matrix={new THREE.Matrix4().lookAt(
+                    new THREE.Vector3(0, 0, 0),  // Look from origin 
+                    userDirection.clone().multiplyScalar(-1), // Look toward direction (inverted)
+                    new THREE.Vector3(0, 1, 0)   // Up vector
+                  )}
+                >
+                  {/* Cone geometry with its tip at the user position */}
+                  <mesh ref={coneRef} position={[0, coneProps.height/2, 0]} rotation={[Math.PI, 0, 0]}>
+                    <coneGeometry 
+                      args={[
+                        coneProps.baseRadius,
+                        coneProps.height,
+                        32, // Segments
+                        1, // Height segments
+                        true // Open ended
+                      ]} 
+                    />
+                    <meshBasicMaterial 
+                      color="#f7d794"
+                      transparent={true}
+                      opacity={0.2}
+                      side={THREE.DoubleSide}
+                      depthWrite={false}
+                    />
+                  </mesh>
+                </group>
               </group>
             </>
           )}
