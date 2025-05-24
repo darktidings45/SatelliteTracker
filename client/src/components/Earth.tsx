@@ -7,8 +7,8 @@ import Satellite from './Satellite';
 import { EARTH_RADIUS } from '../lib/consts';
 
 // Average Earth altitude above sea level in relative units to our Earth radius
-// Increasing this value to ensure the cone is clearly visible on the surface
-const AVERAGE_EARTH_ALTITUDE = 0.05 * EARTH_RADIUS;
+// Using a much larger value to ensure the cone is clearly visible outside the Earth
+const AVERAGE_EARTH_ALTITUDE = 0.2 * EARTH_RADIUS;
 
 const Earth = () => {
   const earthRef = useRef<THREE.Group>(null);
@@ -195,14 +195,36 @@ const Earth = () => {
         <primitive object={earthMaterial} attach="material" />
       </mesh>
       
-      {/* Day/Night Toggle Button - positioned above Earth at the top */}
-      <group position={[0, EARTH_RADIUS * 1.5, 0]}>
+      {/* Day/Night Toggle Button - positioned prominently in front of Earth */}
+      <group position={[0, EARTH_RADIUS * 1.8, EARTH_RADIUS * 1.2]} scale={1.2}>
         <mesh 
           onClick={() => setMapStyle(prev => prev === 'day' ? 'night' : 'day')}
+          position={[0, 0, 0]}
         >
-          <boxGeometry args={[1, 0.5, 0.2]} />
+          <boxGeometry args={[2, 1, 0.3]} />
           <meshStandardMaterial color={mapStyle === 'day' ? "#ffd700" : "#000080"} />
         </mesh>
+        
+        {/* Sun/Moon icons instead of text */}
+        {mapStyle === 'day' ? (
+          // Sun icon (yellow circle)
+          <mesh position={[0, 0, 0.2]}>
+            <sphereGeometry args={[0.4, 16, 16]} />
+            <meshBasicMaterial color="#ffff00" />
+          </mesh>
+        ) : (
+          // Moon icon (white crescent)
+          <group position={[0, 0, 0.2]}>
+            <mesh>
+              <sphereGeometry args={[0.4, 16, 16]} />
+              <meshBasicMaterial color="#aaaaaa" />
+            </mesh>
+            <mesh position={[0.15, 0, 0.1]}>
+              <sphereGeometry args={[0.35, 16, 16]} />
+              <meshBasicMaterial color="#000055" />
+            </mesh>
+          </group>
+        )}
       </group>
       
       {/* Atmosphere glow */}
@@ -225,32 +247,35 @@ const Earth = () => {
               position={userPositionData.position.toArray()}
               quaternion={userPositionData.quaternion}
             >
-              {/* Calculate offset to place cone origin at Earth's surface with altitude */}
-              <group position={[0, AVERAGE_EARTH_ALTITUDE, 0]}>
-                {/* The aperture cone's vertex (narrow end) should be exactly at the surface location */}
-                <mesh 
-                  ref={coneRef} 
-                  rotation={[Math.PI, 0, 0]}
-                >
-                  <coneGeometry 
-                    args={[
-                      // Base radius depends on aperture angle (in radians)
-                      // Use tangent to calculate the radius based on height and angle
-                      EARTH_RADIUS * 2 * Math.tan((apertureAngle * Math.PI / 180) / 2), 
-                      EARTH_RADIUS * 4, // Height
-                      32, // Segments
-                      1, // Height segments
-                      true // Open ended
-                    ]} 
-                  />
-                  <primitive object={apertureMaterial} attach="material" />
-                </mesh>
-                
-                {/* Visual indicator of the exact cone origin point */}
+              {/* Create a visible cone that sits clearly on the Earth's surface */}
+              <group>
+                {/* First, create a yellow marker at the exact position on Earth's surface */}
                 <mesh>
-                  <sphereGeometry args={[0.1, 16, 16]} />
+                  <sphereGeometry args={[0.3, 16, 16]} />
                   <meshBasicMaterial color="#ffff00" />
                 </mesh>
+                
+                {/* Then add the cone pointing outward from Earth, at an offset from the surface */}
+                <group position={[0, 0, 0]}>
+                  <mesh 
+                    ref={coneRef} 
+                    rotation={[0, 0, 0]}
+                    position={[0, AVERAGE_EARTH_ALTITUDE, 0]}
+                  >
+                    <coneGeometry 
+                      args={[
+                        // Base radius depends on aperture angle (in radians)
+                        // Use tangent to calculate the radius based on height and angle
+                        EARTH_RADIUS * 1.5 * Math.tan((apertureAngle * Math.PI / 180) / 2), 
+                        EARTH_RADIUS * 3, // Height
+                        32, // Segments
+                        1, // Height segments
+                        true // Open ended
+                      ]} 
+                    />
+                    <primitive object={apertureMaterial} attach="material" />
+                  </mesh>
+                </group>
               </group>
             </group>
           )}
