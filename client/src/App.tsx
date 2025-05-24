@@ -1,6 +1,5 @@
 import { Canvas } from '@react-three/fiber';
 import { Suspense, useEffect, useState } from 'react';
-import { KeyboardControls } from '@react-three/drei';
 import { useAudio } from './lib/stores/useAudio';
 import Earth from './components/Earth';
 import Stars from './components/Stars';
@@ -12,24 +11,13 @@ import { useSatelliteStore } from './lib/stores/useSatelliteStore';
 import "@fontsource/inter";
 import { Perf } from 'r3f-perf';
 
-// Define control keys for camera navigation
-const controls = [
-  { name: "forward", keys: ["KeyW", "ArrowUp"] },
-  { name: "backward", keys: ["KeyS", "ArrowDown"] },
-  { name: "leftward", keys: ["KeyA", "ArrowLeft"] },
-  { name: "rightward", keys: ["KeyD", "ArrowRight"] },
-  { name: "zoomIn", keys: ["KeyQ"] },
-  { name: "zoomOut", keys: ["KeyE"] },
-  { name: "reset", keys: ["KeyR"] },
-];
-
 // Main App component
 function App() {
   const [showCanvas, setShowCanvas] = useState(false);
   const { loadSatellites, loading, error } = useSatelliteStore();
   const { setHitSound, setSuccessSound, toggleMute } = useAudio();
 
-  // Initialize sounds
+  // Initialize sounds and load data
   useEffect(() => {
     const hit = new Audio("/sounds/hit.mp3");
     const success = new Audio("/sounds/success.mp3");
@@ -45,10 +33,15 @@ function App() {
     
     // Show the canvas once everything is ready
     setShowCanvas(true);
+    
+    // Cleanup function
+    return () => {
+      // Clean up any resources if needed
+    };
   }, []);
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', background: '#0a0f16' }}>
       {loading && (
         <div className="loading-overlay">
           <div className="loading-spinner"></div>
@@ -66,44 +59,43 @@ function App() {
       
       {showCanvas && (
         <>
-          <KeyboardControls map={controls}>
-            <Canvas
-              shadows
-              camera={{
-                position: [0, 20, 35],
-                fov: 45,
-                near: 0.1,
-                far: 1000
-              }}
-              gl={{
-                antialias: true,
-                powerPreference: "default"
-              }}
-            >
-              {process.env.NODE_ENV === 'development' && <Perf position="top-left" />}
-              
-              {/* Background stars */}
-              <Stars />
-              
-              {/* Lighting */}
-              <ambientLight intensity={0.2} />
-              <directionalLight 
-                position={[50, 30, 50]} 
-                intensity={2} 
-                castShadow 
-                shadow-mapSize-width={2048} 
-                shadow-mapSize-height={2048}
-              />
-              
-              <Suspense fallback={null}>
-                {/* Earth and satellites */}
-                <Earth />
-                
-                {/* Camera controls */}
-                <Controls />
-              </Suspense>
-            </Canvas>
-          </KeyboardControls>
+          <Canvas
+            shadows
+            camera={{
+              position: [0, 20, 35],
+              fov: 45,
+              near: 0.1,
+              far: 1000
+            }}
+            gl={{
+              antialias: true,
+              powerPreference: "default"
+            }}
+          >
+            {process.env.NODE_ENV === 'development' && <Perf position="top-left" />}
+            
+            {/* Background stars */}
+            <Stars />
+            
+            {/* Lighting */}
+            <ambientLight intensity={0.3} />
+            <directionalLight 
+              position={[50, 30, 50]} 
+              intensity={1.5} 
+              castShadow 
+              shadow-mapSize={2048}
+            />
+            <directionalLight 
+              position={[-50, -30, -50]} 
+              intensity={0.5} 
+            />
+            
+            {/* Earth and satellites */}
+            <Earth />
+            
+            {/* Camera controls */}
+            <Controls />
+          </Canvas>
           
           {/* UI Components */}
           <FilterPanel />
