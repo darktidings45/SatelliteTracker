@@ -59,7 +59,7 @@ const Earth = () => {
   });
 
   // Convert user's latitude/longitude to a 3D position for filtering
-  const userPosition = useMemo(() => {
+  const userPositionData = useMemo(() => {
     if (!userLocation) return null;
     
     const { latitude, longitude } = userLocation;
@@ -73,8 +73,25 @@ const Earth = () => {
     const y = EARTH_RADIUS * Math.sin(latRad);
     const z = EARTH_RADIUS * Math.cos(latRad) * Math.sin(lonRad);
     
-    return new THREE.Vector3(x, y, z);
+    // Calculate surface normal at this position (points outward from Earth center)
+    const position = new THREE.Vector3(x, y, z);
+    const normal = position.clone().normalize();
+    
+    // Create a rotation matrix to orient objects along this normal vector
+    const quaternion = new THREE.Quaternion();
+    // Default cone points in negative Y direction, we want to align with the normal
+    const upVector = new THREE.Vector3(0, 1, 0);
+    quaternion.setFromUnitVectors(upVector, normal);
+    
+    return {
+      position,
+      normal,
+      quaternion
+    };
   }, [userLocation]);
+  
+  // Extract the position vector for use elsewhere
+  const userPosition = userPositionData?.position || null;
 
   console.log("Earth rendering, satellites:", satellites.length);
 
@@ -107,13 +124,18 @@ const Earth = () => {
           </mesh>
           
           {/* Aperture cone visualization */}
-          {showApertureCone && (
-            <group position={userPosition.toArray()}>
-              <mesh ref={coneRef} rotation={[Math.PI, 0, 0]}>
+          {showApertureCone && userPositionData && (
+            <group 
+              position={userPositionData.position.toArray()}
+              quaternion={userPositionData.quaternion}
+            >
+              <mesh ref={coneRef}>
                 <coneGeometry 
                   args={[
-                    EARTH_RADIUS * 2, // Base radius
-                    EARTH_RADIUS * 3, // Height
+                    // Base radius depends on aperture angle (in radians)
+                    // Use tangent to calculate the radius based on height and angle
+                    EARTH_RADIUS * 2 * Math.tan((apertureAngle * Math.PI / 180) / 2), 
+                    EARTH_RADIUS * 4, // Height
                     32, // Segments
                     1, // Height segments
                     true // Open ended
