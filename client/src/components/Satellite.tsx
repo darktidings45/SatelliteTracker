@@ -33,28 +33,40 @@ const Satellite = ({
     return calculateSatellitePosition(satellite.tle, currentTime);
   }, [satellite.tle, currentTime]);
   
-  // Direct matching with the cone's visual orientation
+  // Absolute most precise cone-point intersection detection
   const isInCone = useMemo(() => {
     // If no user position or cone direction, it's not in any cone
     if (!userPosition || !coneDirection) return false;
     
-    // Get normalized vector from user position to satellite
-    const toSatellite = new THREE.Vector3(
+    // Vector from cone apex (user position) to satellite
+    const apexToPoint = new THREE.Vector3(
       position.x - userPosition.x,
       position.y - userPosition.y,
       position.z - userPosition.z
-    ).normalize();
+    );
     
-    // Direct comparison with the cone direction (which now points outward)
-    const cosAngle = coneDirection.dot(toSatellite);
+    // 1. First check: Is the satellite in front of the cone apex along the cone axis?
+    // Project the apex-to-point vector onto the cone axis
+    const projectionLength = apexToPoint.dot(coneDirection);
     
-    // Convert aperture angle from degrees to radians and get its cosine
-    const halfApertureRad = (apertureAngle / 2) * Math.PI / 180;
-    const cosHalfAperture = Math.cos(halfApertureRad);
+    // If projection is negative or zero, satellite is behind or at the cone's apex
+    if (projectionLength <= 0) return false;
     
-    // If cosine of angle between vectors is greater than cosine of half aperture,
-    // the angle is smaller than half aperture, so the satellite is in the cone
-    return cosAngle > cosHalfAperture;
+    // 2. Calculate the distance from the point to the cone axis
+    // Project vector onto axis to get closest point on axis
+    const projectedPoint = coneDirection.clone().multiplyScalar(projectionLength);
+    // Vector from projection on axis to the actual point
+    const perpendicular = new THREE.Vector3().subVectors(apexToPoint, projectedPoint);
+    // Distance from point to axis
+    const distanceToAxis = perpendicular.length();
+    
+    // 3. Calculate cone radius at the projection distance
+    // (distance from apex along cone axis)
+    const halfAngleRadians = (apertureAngle / 2) * (Math.PI / 180);
+    const radiusAtDistance = projectionLength * Math.tan(halfAngleRadians);
+    
+    // 4. Point is inside cone if its distance to axis is less than cone radius at that distance
+    return distanceToAxis <= radiusAtDistance;
   }, [userPosition, position, apertureAngle, coneDirection]);
   
   // Satellite color based on type/purpose
