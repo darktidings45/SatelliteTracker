@@ -13,13 +13,15 @@ interface SatelliteProps {
   currentTime: Date;
   userPosition: THREE.Vector3 | null;
   apertureAngle: number;
+  coneDirection?: THREE.Vector3; // Direction vector for the aperture cone
 }
 
 const Satellite = ({ 
   satellite, 
   currentTime,
   userPosition, 
-  apertureAngle 
+  apertureAngle,
+  coneDirection
 }: SatelliteProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const { setSelectedSatellite, selectedSatellite } = useSatelliteStore();
@@ -31,7 +33,7 @@ const Satellite = ({
     return calculateSatellitePosition(satellite.tle, currentTime);
   }, [satellite.tle, currentTime]);
   
-  // Determine if this satellite is visible from the user's location
+  // Determine if this satellite is visible from the user's location with directed cone
   const isVisible = useMemo(() => {
     // If no user position is set, show all satellites
     if (!userPosition) return true;
@@ -41,20 +43,20 @@ const Satellite = ({
       position.x - userPosition.x,
       position.y - userPosition.y,
       position.z - userPosition.z
-    );
+    ).normalize();
     
-    // Calculate normalized user position (direction from earth center to user)
-    const userDirection = userPosition.clone().normalize();
+    // If no cone direction provided, use the normal from user position (original behavior)
+    const direction = coneDirection || userPosition.clone().normalize();
     
-    // Calculate the angle between user direction and satellite direction
-    const angle = userDirection.angleTo(toSatellite);
+    // Calculate the angle between cone direction and satellite direction
+    const angle = direction.angleTo(toSatellite);
     
     // Convert aperture angle from degrees to radians
-    const apertureRad = apertureAngle * Math.PI / 180;
+    const halfApertureRad = (apertureAngle / 2) * Math.PI / 180;
     
     // Check if the satellite is within the aperture cone
-    return angle <= apertureRad;
-  }, [userPosition, position, apertureAngle]);
+    return angle <= halfApertureRad;
+  }, [userPosition, position, apertureAngle, coneDirection]);
   
   // Satellite color based on type/purpose
   const satelliteColor = useMemo(() => {

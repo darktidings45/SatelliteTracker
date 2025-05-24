@@ -251,6 +251,7 @@ const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => 
           currentTime={currentTime}
           userPosition={userPosition}
           apertureAngle={apertureAngle}
+          coneDirection={coneDirection}
         />
       ))}
     </group>
