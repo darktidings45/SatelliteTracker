@@ -1,14 +1,20 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
-import { Sphere, useHelper } from '@react-three/drei';
+import { Sphere, useHelper, useTexture } from '@react-three/drei';
 import { useSatelliteStore } from '../lib/stores/useSatelliteStore';
 import Satellite from './Satellite';
 import { EARTH_RADIUS } from '../lib/consts';
 
+// Average Earth altitude above sea level in relative units to our Earth radius
+const AVERAGE_EARTH_ALTITUDE = 0.0005 * EARTH_RADIUS;
+
 const Earth = () => {
   const earthRef = useRef<THREE.Group>(null);
   const coneRef = useRef<THREE.Mesh>(null);
+  
+  // Track the current map style
+  const [mapStyle, setMapStyle] = useState<'day' | 'night'>('day');
   
   // Get satellites and filter states from store
   const { 
@@ -20,21 +26,23 @@ const Earth = () => {
     showApertureCone
   } = useSatelliteStore();
   
-  // Earth materials
-  const earthMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#1a5276', // Deep blue ocean color
-    roughness: 0.7,
-    metalness: 0.2,
-  }), []);
+  // Load Earth texture maps
+  const earthTextures = useTexture({
+    day: '/textures/earth_daymap.jpg',
+    night: '/textures/earth_nightmap.jpg',
+    specular: '/textures/earth_specular.jpg',
+  });
   
-  const landMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: '#27ae60', // Green land color
-    transparent: true,
-    opacity: 0.6,
-    roughness: 1,
-    metalness: 0,
-    wireframe: false,
-  }), []);
+  // Earth materials with textures
+  const earthMaterial = useMemo(() => {
+    const material = new THREE.MeshStandardMaterial({
+      map: mapStyle === 'day' ? earthTextures.day : earthTextures.night,
+      roughnessMap: earthTextures.specular,
+      roughness: 0.7,
+      metalness: 0.2,
+    });
+    return material;
+  }, [earthTextures, mapStyle]);
   
   const atmosphereMaterial = useMemo(() => new THREE.MeshStandardMaterial({
     color: '#84b7de', 
@@ -104,11 +112,15 @@ const Earth = () => {
         <primitive object={earthMaterial} attach="material" />
       </mesh>
       
-      {/* Land masses */}
-      <mesh>
-        <sphereGeometry args={[EARTH_RADIUS + 0.05, 32, 32]} />
-        <primitive object={landMaterial} attach="material" />
-      </mesh>
+      {/* Day/Night Toggle Button - positioned above Earth at the top */}
+      <group position={[0, EARTH_RADIUS * 1.5, 0]}>
+        <mesh 
+          onClick={() => setMapStyle(prev => prev === 'day' ? 'night' : 'day')}
+        >
+          <boxGeometry args={[1, 0.5, 0.2]} />
+          <meshStandardMaterial color={mapStyle === 'day' ? "#ffd700" : "#000080"} />
+        </mesh>
+      </group>
       
       {/* Atmosphere glow */}
       <mesh>
@@ -130,30 +142,33 @@ const Earth = () => {
               position={userPositionData.position.toArray()}
               quaternion={userPositionData.quaternion}
             >
-              {/* The aperture cone's vertex (narrow end) should be exactly at the surface location */}
-              <mesh 
-                ref={coneRef} 
-                rotation={[Math.PI, 0, 0]}
-              >
-                <coneGeometry 
-                  args={[
-                    // Base radius depends on aperture angle (in radians)
-                    // Use tangent to calculate the radius based on height and angle
-                    EARTH_RADIUS * 2 * Math.tan((apertureAngle * Math.PI / 180) / 2), 
-                    EARTH_RADIUS * 4, // Height
-                    32, // Segments
-                    1, // Height segments
-                    true // Open ended
-                  ]} 
-                />
-                <primitive object={apertureMaterial} attach="material" />
-              </mesh>
-              
-              {/* Visual indicator of the exact cone origin point */}
-              <mesh>
-                <sphereGeometry args={[0.1, 16, 16]} />
-                <meshBasicMaterial color="#ffff00" />
-              </mesh>
+              {/* Calculate offset to place cone origin at Earth's surface with altitude */}
+              <group position={[0, AVERAGE_EARTH_ALTITUDE, 0]}>
+                {/* The aperture cone's vertex (narrow end) should be exactly at the surface location */}
+                <mesh 
+                  ref={coneRef} 
+                  rotation={[Math.PI, 0, 0]}
+                >
+                  <coneGeometry 
+                    args={[
+                      // Base radius depends on aperture angle (in radians)
+                      // Use tangent to calculate the radius based on height and angle
+                      EARTH_RADIUS * 2 * Math.tan((apertureAngle * Math.PI / 180) / 2), 
+                      EARTH_RADIUS * 4, // Height
+                      32, // Segments
+                      1, // Height segments
+                      true // Open ended
+                    ]} 
+                  />
+                  <primitive object={apertureMaterial} attach="material" />
+                </mesh>
+                
+                {/* Visual indicator of the exact cone origin point */}
+                <mesh>
+                  <sphereGeometry args={[0.1, 16, 16]} />
+                  <meshBasicMaterial color="#ffff00" />
+                </mesh>
+              </group>
             </group>
           )}
         </>
