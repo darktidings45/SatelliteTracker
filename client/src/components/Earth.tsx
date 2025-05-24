@@ -137,7 +137,7 @@ const Earth = () => {
                 position={coneData.position.toArray()}
                 quaternion={coneData.quaternion}
               >
-                <mesh ref={coneRef}>
+                <mesh ref={coneRef} position={[0, coneData.height/2, 0]}>
                   <coneGeometry 
                     args={[
                       coneData.baseRadius,
