@@ -33,10 +33,10 @@ const Satellite = ({
     return calculateSatellitePosition(satellite.tle, currentTime);
   }, [satellite.tle, currentTime]);
   
-  // Determine if this satellite is visible from the user's location with directed cone
-  const isVisible = useMemo(() => {
-    // If no user position is set, show all satellites
-    if (!userPosition) return true;
+  // Determine if this satellite is within the aperture cone (for highlighting)
+  const isInCone = useMemo(() => {
+    // If no user position or cone direction, it's not in any cone
+    if (!userPosition || !coneDirection) return false;
     
     // Calculate the vector from user position to satellite
     const toSatellite = new THREE.Vector3(
@@ -45,11 +45,8 @@ const Satellite = ({
       position.z - userPosition.z
     ).normalize();
     
-    // If no cone direction provided, use the normal from user position (original behavior)
-    const direction = coneDirection || userPosition.clone().normalize();
-    
     // Calculate the angle between cone direction and satellite direction
-    const angle = direction.angleTo(toSatellite);
+    const angle = coneDirection.angleTo(toSatellite);
     
     // Convert aperture angle from degrees to radians
     const halfApertureRad = (apertureAngle / 2) * Math.PI / 180;
@@ -97,19 +94,34 @@ const Satellite = ({
   
   // Pulse effect for selected satellites
   useFrame(({ clock }) => {
-    if (meshRef.current && isSelected) {
-      const pulse = Math.sin(clock.getElapsedTime() * 5) * 0.1 + 1;
-      meshRef.current.scale.set(
-        SATELLITE_SCALE * pulse,
-        SATELLITE_SCALE * pulse,
-        SATELLITE_SCALE * pulse
-      );
+    if (meshRef.current) {
+      if (isSelected) {
+        // Pulsing effect for selected satellites
+        const pulse = Math.sin(clock.getElapsedTime() * 5) * 0.1 + 1;
+        meshRef.current.scale.set(
+          SATELLITE_SCALE * pulse,
+          SATELLITE_SCALE * pulse,
+          SATELLITE_SCALE * pulse
+        );
+      } else if (isInCone) {
+        // Slightly larger scale for satellites in the cone
+        meshRef.current.scale.set(
+          SATELLITE_SCALE * 1.2,
+          SATELLITE_SCALE * 1.2,
+          SATELLITE_SCALE * 1.2
+        );
+      } else {
+        // Normal scale for other satellites
+        meshRef.current.scale.set(
+          SATELLITE_SCALE,
+          SATELLITE_SCALE,
+          SATELLITE_SCALE
+        );
+      }
     }
   });
   
-  // Hide satellites that aren't visible based on user's location/aperture
-  if (!isVisible) return null;
-  
+  // Always show all satellites, but highlight those in the cone
   return (
     <group position={[position.x, position.y, position.z]}>
       {/* Satellite body */}
@@ -124,16 +136,20 @@ const Satellite = ({
         <meshStandardMaterial 
           color={satelliteColor}
           emissive={satelliteColor}
-          emissiveIntensity={hovered ? 0.8 : isSelected ? 1 : 0.5}
+          emissiveIntensity={
+            hovered ? 0.8 : 
+            isSelected ? 1 : 
+            isInCone ? 1.0 : 0.2
+          }
         />
       </Sphere>
       
-      {/* Glow effect */}
-      <Sphere args={[0.3, 8, 8]} scale={SATELLITE_SCALE * 1.2}>
+      {/* Glow effect - enhanced for satellites in the cone */}
+      <Sphere args={[0.3, 8, 8]} scale={SATELLITE_SCALE * (isInCone ? 1.5 : 1.2)}>
         <meshBasicMaterial 
           color={satelliteColor} 
           transparent={true} 
-          opacity={0.15} 
+          opacity={isInCone ? 0.3 : 0.15} 
         />
       </Sphere>
       
