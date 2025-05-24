@@ -1,7 +1,7 @@
 import { useRef, useMemo, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Sphere, useHelper, useTexture, PerspectiveCamera } from '@react-three/drei';
+import { Sphere, useHelper, useTexture, PerspectiveCamera, Html } from '@react-three/drei';
 import { useSatelliteStore } from '../lib/stores/useSatelliteStore';
 import Satellite from './Satellite';
 import { EARTH_RADIUS } from '../lib/consts';
@@ -66,37 +66,46 @@ const Earth = () => {
   // Access the Three.js camera
   const { camera } = useThree();
   
-  // Simple position calculation directly from lat/lon 
-  const userPosition = useMemo(() => {
+  // Add azimuth and elevation controls
+  const [azimuth, setAzimuth] = useState(0);
+  const [elevation, setElevation] = useState(0);
+  
+  // Create controls to adjust azimuth and elevation
+  useEffect(() => {
+    // Add keyboard controls for azimuth and elevation
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Arrow keys for azimuth
+      if (e.key === 'ArrowLeft') setAzimuth(prev => (prev - 5) % 360);
+      if (e.key === 'ArrowRight') setAzimuth(prev => (prev + 5) % 360);
+      
+      // Up/Down for elevation
+      if (e.key === 'ArrowUp') setElevation(prev => Math.min(prev + 5, 90));
+      if (e.key === 'ArrowDown') setElevation(prev => Math.max(prev - 5, -90));
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+  
+  // Use our enhanced cone function with azimuth and elevation
+  const coneData = useMemo(() => {
     if (!userLocation) return null;
     
     const { latitude, longitude } = userLocation;
     
-    // Convert to cartesian coordinates
-    return latLonToCartesian(latitude, longitude);
-  }, [userLocation]);
+    // Get cone data with azimuth and elevation
+    return createApertureCone(
+      latitude,
+      longitude,
+      apertureAngle,
+      azimuth,
+      elevation,
+      EARTH_RADIUS * 4
+    );
+  }, [userLocation, apertureAngle, azimuth, elevation]);
   
-  // Calculate the normalized direction from Earth center to user position
-  const userDirection = useMemo(() => {
-    if (!userPosition) return null;
-    return userPosition.clone().normalize();
-  }, [userPosition]);
-  
-  // Position a very simple cone directly at the user location
-  const coneProps = useMemo(() => {
-    if (!userPosition || !userDirection) return null;
-    
-    // Cone dimensions based on aperture angle
-    const height = EARTH_RADIUS * 4;
-    const baseRadius = height * Math.tan((apertureAngle * Math.PI / 180) / 2);
-    
-    return {
-      position: userPosition.clone(),
-      direction: userDirection.clone(),
-      height,
-      baseRadius
-    };
-  }, [userPosition, userDirection, apertureAngle]);
+  // Use the position for other calculations
+  const userPosition = coneData?.position || null;
 
   console.log("Earth rendering, satellites:", satellites.length);
 
@@ -132,8 +141,8 @@ const Earth = () => {
             <meshBasicMaterial color="#ff0000" />
           </mesh>
           
-          {/* Simplified aperture cone visualization */}
-          {showApertureCone && userPosition && userDirection && coneProps && (
+          {/* Aperture cone with azimuth and elevation control */}
+          {showApertureCone && userPosition && coneData && (
             <>
               {/* Yellow marker to show exact location on Earth's surface */}
               <mesh position={userPosition.toArray()}>
@@ -141,22 +150,22 @@ const Earth = () => {
                 <meshBasicMaterial color="#ffff00" />
               </mesh>
               
-              {/* Create a cone that always points directly outward from Earth's center */}
+              {/* Create a cone oriented using the direction from our enhanced function */}
               <group position={userPosition.toArray()}>
-                {/* Create a look-at matrix to orient the cone along the direction vector */}
+                {/* Orient the cone using lookAt with the calculated direction */}
                 <group 
                   matrix={new THREE.Matrix4().lookAt(
                     new THREE.Vector3(0, 0, 0),  // Look from origin 
-                    userDirection.clone().multiplyScalar(-1), // Look toward direction (inverted)
+                    coneData.direction.clone().multiplyScalar(-1), // Direction (inverted)
                     new THREE.Vector3(0, 1, 0)   // Up vector
                   )}
                 >
                   {/* Cone geometry with its tip at the user position */}
-                  <mesh ref={coneRef} position={[0, coneProps.height/2, 0]} rotation={[Math.PI, 0, 0]}>
+                  <mesh ref={coneRef} position={[0, coneData.height/2, 0]} rotation={[Math.PI, 0, 0]}>
                     <coneGeometry 
                       args={[
-                        coneProps.baseRadius,
-                        coneProps.height,
+                        coneData.baseRadius,
+                        coneData.height,
                         32, // Segments
                         1, // Height segments
                         true // Open ended
@@ -171,6 +180,31 @@ const Earth = () => {
                     />
                   </mesh>
                 </group>
+              </group>
+              
+              {/* Direction indicator and current values */}
+              <group position={[0, EARTH_RADIUS * 1.5, 0]}>
+                <mesh position={[0, 1, 0]}>
+                  <meshBasicMaterial color="white" />
+                  <boxGeometry args={[4, 0.5, 0.1]} />
+                </mesh>
+                <Html position={[0, 1, 0]} center>
+                  <div style={{ 
+                    color: 'white', 
+                    background: 'rgba(0,0,0,0.7)', 
+                    padding: '10px',
+                    borderRadius: '5px',
+                    width: '200px'
+                  }}>
+                    <div>Azimuth: {azimuth}°</div>
+                    <div>Elevation: {elevation}°</div>
+                    <div style={{ fontSize: '0.8em', marginTop: '5px' }}>
+                      Use arrow keys to adjust:
+                      <br />← → for azimuth
+                      <br />↑ ↓ for elevation
+                    </div>
+                  </div>
+                </Html>
               </group>
             </>
           )}

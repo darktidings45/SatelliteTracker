@@ -58,14 +58,17 @@ export function getOrientationQuaternion(normal: THREE.Vector3): THREE.Quaternio
 }
 
 // Create a custom cone geometry that starts at the surface and extends outward
+// with an optional azimuth angle to point in different directions
 export function createApertureCone(
   lat: number, 
   lon: number, 
   apertureDegrees: number, 
+  azimuthDegrees: number = 0, // 0 = directly outward from surface, other values rotate around the normal
+  elevationDegrees: number = 0, // 0 = along surface normal, positive values tilt upward
   length: number = EARTH_RADIUS * 4
 ): {
   position: THREE.Vector3;
-  quaternion: THREE.Quaternion;
+  direction: THREE.Vector3;
   baseRadius: number;
   height: number;
 } {
@@ -76,16 +79,51 @@ export function createApertureCone(
   // Calculate cone dimensions
   const baseRadius = length * Math.tan((apertureDegrees * Math.PI / 180) / 2);
   
-  // Create quaternion to rotate the cone so it points outward from the surface
-  const quaternion = new THREE.Quaternion();
-  // Default cone points along negative Y axis in Three.js
-  // We need to rotate it to align with the normal vector pointing outward
-  const fromDirection = new THREE.Vector3(0, -1, 0); // Default cone direction
-  quaternion.setFromUnitVectors(fromDirection, surfaceNormal);
+  // Calculate final direction with azimuth and elevation
+  let finalDirection = surfaceNormal.clone();
+  
+  if (azimuthDegrees !== 0 || elevationDegrees !== 0) {
+    // Create local coordinate system at the surface point
+    // Surface normal is the "up" direction
+    const up = surfaceNormal.clone();
+    
+    // Find a perpendicular vector to the normal (this will be our "east" direction)
+    // Start with a reference vector (different from normal)
+    const reference = new THREE.Vector3(1, 0, 0);
+    if (Math.abs(up.dot(reference)) > 0.99) {
+      // If normal is too close to reference, use a different reference
+      reference.set(0, 1, 0);
+    }
+    
+    // Cross product gives a perpendicular vector (east)
+    const east = new THREE.Vector3().crossVectors(up, reference).normalize();
+    
+    // Another cross product gives the "north" direction
+    const north = new THREE.Vector3().crossVectors(east, up).normalize();
+    
+    // Convert angles to radians
+    const azimuthRad = azimuthDegrees * (Math.PI / 180);
+    const elevationRad = elevationDegrees * (Math.PI / 180);
+    
+    // Apply azimuth rotation (around the normal axis)
+    const azimuthX = Math.sin(azimuthRad);
+    const azimuthZ = Math.cos(azimuthRad);
+    
+    // Apply elevation (tilt from the normal)
+    const elevationY = Math.cos(elevationRad);
+    const elevationXZ = Math.sin(elevationRad);
+    
+    // Combine into final direction
+    finalDirection = new THREE.Vector3()
+      .addScaledVector(north, azimuthZ * elevationXZ)
+      .addScaledVector(east, azimuthX * elevationXZ)
+      .addScaledVector(up, elevationY)
+      .normalize();
+  }
   
   return {
     position: surfacePosition,
-    quaternion,
+    direction: finalDirection,
     baseRadius,
     height: length
   };
