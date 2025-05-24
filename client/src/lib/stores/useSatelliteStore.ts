@@ -31,7 +31,6 @@ interface SatelliteState {
   // Visualization options
   autoRotateEarth: boolean;
   showApertureCone: boolean;
-  mapDetail: number; // Map detail level from 0.5 (low) to 1.5 (high)
   
   // Status
   loading: boolean;
@@ -49,7 +48,6 @@ interface SatelliteState {
   resetTime: () => void;
   toggleEarthRotation: () => void;
   toggleApertureCone: () => void;
-  setMapDetail: (detail: number) => void;
 }
 
 // Utility functions moved from useSatellites hook
@@ -146,7 +144,6 @@ export const useSatelliteStore = create<SatelliteState>()(
       isPaused: false,
       autoRotateEarth: false,
       showApertureCone: true,
-      mapDetail: 1.0, // Default map detail level (medium)
       loading: false,
       error: null,
       
@@ -269,11 +266,6 @@ export const useSatelliteStore = create<SatelliteState>()(
       // Toggle aperture cone visibility
       toggleApertureCone: () => {
         set(state => ({ showApertureCone: !state.showApertureCone }));
-      },
-      
-      // Set map detail level
-      setMapDetail: (detail) => {
-        set({ mapDetail: Math.max(0.5, Math.min(1.5, detail)) }); // Clamp between 0.5 and 1.5
       }
     };
   })

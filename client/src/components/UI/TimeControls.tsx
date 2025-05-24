@@ -14,9 +14,7 @@ const TimeControls = () => {
     autoRotateEarth,
     toggleEarthRotation,
     showApertureCone,
-    toggleApertureCone,
-    mapDetail,
-    setMapDetail
+    toggleApertureCone
   } = useSatelliteStore();
   
   const [isExpanded, setIsExpanded] = useState(true);
@@ -167,29 +165,6 @@ const TimeControls = () => {
               <span>12:00</span>
               <span>18:00</span>
               <span>24:00</span>
-            </div>
-          </div>
-          
-          {/* Map detail slider */}
-          <div className="mt-4">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="text-xs font-semibold text-[#3498db]">Map Detail Level</h3>
-              <span className="text-xs text-[#b2bec3]">{(mapDetail * 100).toFixed(0)}%</span>
-            </div>
-            
-            <input
-              type="range"
-              min="0.5"
-              max="1.5"
-              step="0.1"
-              value={mapDetail}
-              onChange={(e) => setMapDetail(parseFloat(e.target.value))}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-[#b2bec3] mt-1">
-              <span>Low</span>
-              <span>Medium</span>
-              <span>High</span>
             </div>
           </div>
         </div>
