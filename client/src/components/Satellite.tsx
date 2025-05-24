@@ -33,35 +33,28 @@ const Satellite = ({
     return calculateSatellitePosition(satellite.tle, currentTime);
   }, [satellite.tle, currentTime]);
   
-  // Determine if this satellite is within the aperture cone using more accurate detection
+  // Simple cone test with normalization and dot product
   const isInCone = useMemo(() => {
     // If no user position or cone direction, it's not in any cone
     if (!userPosition || !coneDirection) return false;
     
-    // Get the vector from user position to satellite
+    // Get normalized vector from user position to satellite
     const toSatellite = new THREE.Vector3(
       position.x - userPosition.x,
       position.y - userPosition.y,
       position.z - userPosition.z
-    );
+    ).normalize();
     
-    // Project the satellite position onto the cone direction vector
-    const projectionLength = toSatellite.dot(coneDirection);
+    // Get the cosine of the angle between the vectors using dot product
+    const cosAngle = coneDirection.dot(toSatellite);
     
-    // If projection is negative, satellite is behind the cone origin
-    if (projectionLength <= 0) return false;
-    
-    // Calculate distance from cone axis at the projection point
-    const projectionPoint = coneDirection.clone().multiplyScalar(projectionLength);
-    const distanceVector = toSatellite.clone().sub(projectionPoint);
-    const distanceFromAxis = distanceVector.length();
-    
-    // Calculate the cone radius at the projection distance
+    // Convert aperture angle from degrees to radians and get its cosine
     const halfApertureRad = (apertureAngle / 2) * Math.PI / 180;
-    const coneRadiusAtProjection = Math.tan(halfApertureRad) * projectionLength;
+    const cosHalfAperture = Math.cos(halfApertureRad);
     
-    // Check if the satellite is within the cone at this distance
-    return distanceFromAxis <= coneRadiusAtProjection;
+    // If cosine of angle between vectors is greater than cosine of half aperture,
+    // the angle is smaller than half aperture, so the satellite is in the cone
+    return cosAngle > cosHalfAperture;
   }, [userPosition, position, apertureAngle, coneDirection]);
   
   // Satellite color based on type/purpose
