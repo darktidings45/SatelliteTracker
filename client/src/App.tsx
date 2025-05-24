@@ -1,15 +1,14 @@
 import { Canvas } from '@react-three/fiber';
 import { Suspense, useEffect, useState } from 'react';
+import { OrbitControls, Stats } from '@react-three/drei';
 import { useAudio } from './lib/stores/useAudio';
 import Earth from './components/Earth';
 import Stars from './components/Stars';
-import Controls from './components/Controls';
 import FilterPanel from './components/UI/FilterPanel';
 import InfoPanel from './components/UI/InfoPanel';
 import TimeControls from './components/UI/TimeControls';
 import { useSatelliteStore } from './lib/stores/useSatelliteStore';
 import "@fontsource/inter";
-import { Perf } from 'r3f-perf';
 
 // Main App component
 function App() {
@@ -71,30 +70,36 @@ function App() {
               antialias: true,
               powerPreference: "default"
             }}
+            style={{ background: '#0a0f16' }}
           >
-            {process.env.NODE_ENV === 'development' && <Perf position="top-left" />}
-            
             {/* Background stars */}
             <Stars />
             
             {/* Lighting */}
-            <ambientLight intensity={0.3} />
+            <ambientLight intensity={0.5} />
             <directionalLight 
               position={[50, 30, 50]} 
-              intensity={1.5} 
+              intensity={2} 
               castShadow 
-              shadow-mapSize={2048}
             />
-            <directionalLight 
-              position={[-50, -30, -50]} 
-              intensity={0.5} 
-            />
+            <pointLight position={[10, 10, 10]} intensity={0.5} />
             
             {/* Earth and satellites */}
-            <Earth />
+            <Suspense fallback={null}>
+              <Earth />
+            </Suspense>
             
             {/* Camera controls */}
-            <Controls />
+            <OrbitControls 
+              enableDamping={true}
+              dampingFactor={0.1}
+              minDistance={10}
+              maxDistance={100}
+              enablePan={true}
+              enableRotate={true}
+              enableZoom={true}
+              makeDefault
+            />
           </Canvas>
           
           {/* UI Components */}
