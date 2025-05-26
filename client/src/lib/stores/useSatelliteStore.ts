@@ -26,6 +26,7 @@ interface SatelliteState {
   
   // Filtering
   selectedSatelliteTypes: Set<string>;
+  searchFilters: Set<string>;
   userLocation: GeoLocation | null;
   apertureAngle: number;
   
@@ -45,6 +46,9 @@ interface SatelliteState {
   // Actions
   loadSatellites: () => Promise<void>;
   toggleSatelliteType: (type: string) => void;
+  addSearchFilter: (searchTerm: string) => void;
+  removeSearchFilter: (searchTerm: string) => void;
+  clearSearchFilters: () => void;
   setUserLocation: (location: GeoLocation | null) => void;
   setApertureAngle: (angle: number) => void;
   setSelectedSatellite: (satellite: SatelliteData | null) => void;
@@ -145,6 +149,7 @@ export const useSatelliteStore = create<SatelliteState>()(
       filteredSatellites: [],
       selectedSatellite: null,
       selectedSatelliteTypes: new Set(['ALL']),
+      searchFilters: new Set(),
       userLocation: null,
       apertureAngle: DEFAULT_APERTURE_ANGLE,
       currentTime: new Date(),
@@ -269,6 +274,79 @@ export const useSatelliteStore = create<SatelliteState>()(
         });
         
         console.log(`Satellite types selected: ${Array.from(newSelectedTypes).join(', ')}, showing ${filtered.length} satellites`);
+      },
+      
+      // Add search filter
+      addSearchFilter: (searchTerm: string) => {
+        const { searchFilters, satellites, selectedSatelliteTypes } = get();
+        const newSearchFilters = new Set(searchFilters);
+        newSearchFilters.add(searchTerm.toLowerCase());
+        
+        // Apply both type and search filters
+        let filtered = satellites;
+        
+        // Apply type filter
+        if (!selectedSatelliteTypes.has('ALL')) {
+          filtered = filtered.filter(sat => 
+            selectedSatelliteTypes.has(sat.type || 'UNKNOWN')
+          );
+        }
+        
+        // Apply search filters
+        if (newSearchFilters.size > 0) {
+          filtered = filtered.filter(sat => {
+            const name = sat.name.toLowerCase();
+            return Array.from(newSearchFilters).some(term => 
+              name.includes(term)
+            );
+          });
+        }
+        
+        set({ searchFilters: newSearchFilters, filteredSatellites: filtered });
+      },
+      
+      // Remove search filter
+      removeSearchFilter: (searchTerm: string) => {
+        const { searchFilters, satellites, selectedSatelliteTypes } = get();
+        const newSearchFilters = new Set(searchFilters);
+        newSearchFilters.delete(searchTerm.toLowerCase());
+        
+        // Apply both type and search filters
+        let filtered = satellites;
+        
+        // Apply type filter
+        if (!selectedSatelliteTypes.has('ALL')) {
+          filtered = filtered.filter(sat => 
+            selectedSatelliteTypes.has(sat.type || 'UNKNOWN')
+          );
+        }
+        
+        // Apply search filters
+        if (newSearchFilters.size > 0) {
+          filtered = filtered.filter(sat => {
+            const name = sat.name.toLowerCase();
+            return Array.from(newSearchFilters).some(term => 
+              name.includes(term)
+            );
+          });
+        }
+        
+        set({ searchFilters: newSearchFilters, filteredSatellites: filtered });
+      },
+      
+      // Clear all search filters
+      clearSearchFilters: () => {
+        const { satellites, selectedSatelliteTypes } = get();
+        
+        // Apply only type filter
+        let filtered = satellites;
+        if (!selectedSatelliteTypes.has('ALL')) {
+          filtered = filtered.filter(sat => 
+            selectedSatelliteTypes.has(sat.type || 'UNKNOWN')
+          );
+        }
+        
+        set({ searchFilters: new Set(), filteredSatellites: filtered });
       },
       
       // Set user location for visibility filtering

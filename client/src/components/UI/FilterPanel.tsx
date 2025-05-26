@@ -16,6 +16,9 @@ const FilterPanel = ({ directionControls }: { directionControls?: DirectionContr
   const { 
     toggleSatelliteType, 
     selectedSatelliteTypes,
+    searchFilters,
+    removeSearchFilter,
+    clearSearchFilters,
     setUserLocation,
     userLocation,
     setApertureAngle,
@@ -95,6 +98,37 @@ const FilterPanel = ({ directionControls }: { directionControls?: DirectionContr
               ))}
             </div>
           </div>
+          
+          {/* Search Filters Section */}
+          {searchFilters.size > 0 && (
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-sm font-semibold text-[#3498db]">Search Filters</h3>
+                <button
+                  onClick={clearSearchFilters}
+                  className="text-xs text-[#e74c3c] hover:text-[#c0392b] transition-colors"
+                >
+                  Clear All
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {Array.from(searchFilters).map(filter => (
+                  <div
+                    key={filter}
+                    className="flex items-center bg-[#f7d794] text-[#0a0f16] px-2 py-1 rounded text-xs"
+                  >
+                    <span className="mr-1">{filter}</span>
+                    <button
+                      onClick={() => removeSearchFilter(filter)}
+                      className="hover:text-[#e74c3c] transition-colors ml-1"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           
           <div className="mb-4">
             <h3 className="text-sm font-semibold mb-2 text-[#3498db]">Location Filtering</h3>

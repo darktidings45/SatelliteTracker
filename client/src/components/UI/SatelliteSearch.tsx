@@ -4,7 +4,7 @@ import { SatelliteData } from '../../hooks/useSatellites';
 import { cn } from '../../lib/utils';
 
 const SatelliteSearch = () => {
-  const { satellites, selectedSatellite, focusOnSatellite } = useSatelliteStore();
+  const { satellites, selectedSatellite, focusOnSatellite, addSearchFilter } = useSatelliteStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -57,6 +57,11 @@ const SatelliteSearch = () => {
 
   // Handle satellite selection
   const handleSatelliteSelect = (satellite: SatelliteData) => {
+    // Add current search term as a filter if there's a search term
+    if (searchTerm.trim()) {
+      addSearchFilter(searchTerm.trim());
+    }
+    
     focusOnSatellite(satellite);
     setIsExpanded(false);
     setSearchTerm('');
