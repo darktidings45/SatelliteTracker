@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSatelliteStore } from '../../lib/stores/useSatelliteStore';
 import { cn } from '../../lib/utils';
+import { getSatelliteImage, SatelliteImageSource } from '../../lib/satellite-images';
 
 const InfoPanel = () => {
   const { selectedSatellite, setSelectedSatellite } = useSatelliteStore();
   const [isExpanded, setIsExpanded] = useState(true);
+  const [satelliteImage, setSatelliteImage] = useState<SatelliteImageSource | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   // Toggle panel expansion
   const togglePanel = () => {
@@ -15,6 +19,32 @@ const InfoPanel = () => {
   const closePanel = () => {
     setSelectedSatellite(null);
   };
+
+  // Load satellite image when satellite is selected
+  useEffect(() => {
+    if (selectedSatellite && isExpanded) {
+      setImageLoading(true);
+      setImageError(false);
+      setSatelliteImage(null);
+
+      const imageSource = getSatelliteImage(selectedSatellite.name);
+      if (imageSource) {
+        // Test if image loads successfully
+        const img = new Image();
+        img.onload = () => {
+          setSatelliteImage(imageSource);
+          setImageLoading(false);
+        };
+        img.onerror = () => {
+          setImageError(true);
+          setImageLoading(false);
+        };
+        img.src = imageSource.url;
+      } else {
+        setImageLoading(false);
+      }
+    }
+  }, [selectedSatellite, isExpanded]);
 
   // Copy TLE data to clipboard
   const copyTLEData = async () => {
@@ -87,13 +117,15 @@ ${selectedSatellite.tle.join('\n')}`;
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold font-mono truncate">{selectedSatellite.name}</h2>
         <div className="flex gap-2 items-center">
-          <button
-            onClick={copyCard}
-            className="bg-[#30718d] hover:bg-[#3498db] text-white px-3 py-1 rounded text-xs transition-colors"
-            title="Copy all satellite details to clipboard"
-          >
-            Copy Card
-          </button>
+          {isExpanded && (
+            <button
+              onClick={copyCard}
+              className="bg-[#30718d] hover:bg-[#3498db] text-white px-3 py-1 rounded text-xs transition-colors"
+              title="Copy all satellite details to clipboard"
+            >
+              Copy Card
+            </button>
+          )}
           <button 
             onClick={togglePanel}
             className="text-[#3498db] hover:text-[#f7d794] transition-colors"
@@ -111,6 +143,34 @@ ${selectedSatellite.tle.join('\n')}`;
       
       {isExpanded && (
         <div className="satellite-details space-y-4">
+          {/* Satellite Image */}
+          {(satelliteImage || imageLoading) && (
+            <div className="bg-[#1a2634] p-3 rounded">
+              <h3 className="text-sm font-semibold mb-2 text-[#3498db]">Satellite Image</h3>
+              {imageLoading ? (
+                <div className="flex items-center justify-center h-32 bg-[#0a0f16] rounded">
+                  <div className="text-[#b2bec3] text-sm">Loading image...</div>
+                </div>
+              ) : satelliteImage && !imageError ? (
+                <div className="space-y-2">
+                  <img
+                    src={satelliteImage.url}
+                    alt={satelliteImage.name}
+                    className="w-full h-32 object-cover rounded border border-[#34495e]"
+                    onError={() => setImageError(true)}
+                  />
+                  <div className="text-xs text-[#b2bec3]">
+                    Credit: {satelliteImage.credit}
+                  </div>
+                </div>
+              ) : imageError && (
+                <div className="flex items-center justify-center h-32 bg-[#0a0f16] rounded">
+                  <div className="text-[#b2bec3] text-sm">Image not available</div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="bg-[#1a2634] p-3 rounded">
             <h3 className="text-sm font-semibold mb-2 text-[#3498db]">Basic Information</h3>
             <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-sm">
