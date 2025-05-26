@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useSatelliteStore } from '../../lib/stores/useSatelliteStore';
 import { cn } from '../../lib/utils';
-import { getSatelliteImage, SatelliteImageSource } from '../../lib/satellite-images';
+import { getSatelliteImage, getSatelliteInfo, SatelliteImageSource, SatelliteInfo } from '../../lib/satellite-images';
 
 const InfoPanel = () => {
   const { selectedSatellite, setSelectedSatellite } = useSatelliteStore();
   const [isExpanded, setIsExpanded] = useState(true);
   const [satelliteImage, setSatelliteImage] = useState<SatelliteImageSource | null>(null);
+  const [satelliteInfo, setSatelliteInfo] = useState<SatelliteInfo | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   
@@ -20,13 +21,19 @@ const InfoPanel = () => {
     setSelectedSatellite(null);
   };
 
-  // Load satellite image when satellite is selected
+  // Load satellite image and information when satellite is selected
   useEffect(() => {
     if (selectedSatellite && isExpanded) {
       setImageLoading(true);
       setImageError(false);
       setSatelliteImage(null);
+      setSatelliteInfo(null);
 
+      // Load satellite information
+      const info = getSatelliteInfo(selectedSatellite.name);
+      setSatelliteInfo(info);
+
+      // Load satellite image
       const imageSource = getSatelliteImage(selectedSatellite.name);
       if (imageSource) {
         // Test if image loads successfully
