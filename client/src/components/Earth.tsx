@@ -6,6 +6,7 @@ import { useSatelliteStore } from '../lib/stores/useSatelliteStore';
 import Satellite from './Satellite';
 import { EARTH_RADIUS } from '../lib/consts';
 import { createApertureCone, latLonToCartesian, getNormalAtLatLon } from '../lib/utils';
+import { calculateSatellitePosition } from '../lib/satellite-utils';
 
 interface EarthProps {
   azimuth: number;
@@ -32,8 +33,8 @@ const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => 
     showApertureCone
   } = useSatelliteStore();
   
-  // Get Three.js scene controls
-  const { gl } = useThree();
+  // Get Three.js scene controls and camera
+  const { gl, camera, controls } = useThree();
   
   // Load Earth texture maps
   const earthTextures = useTexture({
@@ -74,7 +75,47 @@ const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => 
     }
   });
 
-  // Camera access is already available from above
+  // Effect to center camera on selected satellite
+  useEffect(() => {
+    if (selectedSatellite && controls) {
+      // Calculate the satellite's current position
+      const satPosition = calculateSatellitePosition(selectedSatellite, currentTime);
+      
+      if (satPosition) {
+        // Convert to Three.js coordinates and scale to match our Earth radius
+        const targetPosition = new THREE.Vector3(
+          satPosition.x * EARTH_RADIUS,
+          satPosition.y * EARTH_RADIUS, 
+          satPosition.z * EARTH_RADIUS
+        );
+        
+        // Smoothly animate camera to focus on satellite
+        const distance = 25; // Distance from satellite
+        const cameraPosition = targetPosition.clone().normalize().multiplyScalar(distance);
+        
+        // Set camera target to the satellite position
+        controls.target.copy(targetPosition);
+        
+        // Animate camera position
+        const startPos = camera.position.clone();
+        const endPos = cameraPosition;
+        
+        let progress = 0;
+        const animate = () => {
+          progress += 0.02; // Animation speed
+          if (progress < 1) {
+            camera.position.lerpVectors(startPos, endPos, progress);
+            controls.update();
+            requestAnimationFrame(animate);
+          } else {
+            camera.position.copy(endPos);
+            controls.update();
+          }
+        };
+        animate();
+      }
+    }
+  }, [selectedSatellite, currentTime, camera, controls]);
   
   // Direction controls now passed as props
   
