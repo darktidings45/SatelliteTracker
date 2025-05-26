@@ -160,14 +160,28 @@ ${selectedSatellite.tle.join('\n')}`;
                 </div>
               ) : satelliteImage && !imageError ? (
                 <div className="space-y-2">
-                  <img
-                    src={satelliteImage.url}
-                    alt={satelliteImage.name}
-                    className="w-full h-32 object-cover rounded border border-[#34495e]"
-                    onError={() => setImageError(true)}
-                  />
+                  <a
+                    href={satelliteImage.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <img
+                      src={satelliteImage.url}
+                      alt={satelliteImage.name}
+                      className="w-full h-32 object-cover rounded border border-[#34495e] hover:border-[#3498db] transition-colors cursor-pointer"
+                      onError={() => setImageError(true)}
+                    />
+                  </a>
                   <div className="text-xs text-[#b2bec3]">
-                    Credit: {satelliteImage.credit}
+                    Credit: {satelliteImage.credit} • <a 
+                      href={satelliteImage.sourceUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-[#3498db] hover:underline"
+                    >
+                      View Source
+                    </a>
                   </div>
                 </div>
               ) : imageError && (
@@ -208,6 +222,47 @@ ${selectedSatellite.tle.join('\n')}`;
               <span>{selectedSatellite.inclination ? `${selectedSatellite.inclination.toFixed(2)}°` : 'Unknown'}</span>
             </div>
           </div>
+
+          {/* Mission Information */}
+          {satelliteInfo && (
+            <div className="bg-[#1a2634] p-3 rounded">
+              <h3 className="text-sm font-semibold mb-2 text-[#3498db]">Mission Information</h3>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <span className="text-[#b2bec3] font-medium">Agency:</span>
+                  <p className="text-white">{satelliteInfo.agency}</p>
+                </div>
+                
+                {satelliteInfo.launchYear && (
+                  <div>
+                    <span className="text-[#b2bec3] font-medium">Launch Year:</span>
+                    <p className="text-white">{satelliteInfo.launchYear}</p>
+                  </div>
+                )}
+                
+                <div>
+                  <span className="text-[#b2bec3] font-medium">Mission:</span>
+                  <p className="text-white">{satelliteInfo.mission}</p>
+                </div>
+                
+                <div>
+                  <span className="text-[#b2bec3] font-medium">Description:</span>
+                  <p className="text-white">{satelliteInfo.description}</p>
+                </div>
+                
+                <div className="pt-2">
+                  <a 
+                    href={satelliteInfo.infoUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-[#3498db] hover:underline text-sm"
+                  >
+                    Learn More →
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="bg-[#1a2634] p-3 rounded">
             <div className="flex justify-between items-center mb-2">
