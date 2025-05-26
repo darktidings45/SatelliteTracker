@@ -23,7 +23,7 @@ const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => 
   
   // Get satellites and filter states from store
   const { 
-    satellites, 
+    filteredSatellites, 
     currentTime, 
     userLocation,
     apertureAngle,
@@ -158,7 +158,7 @@ const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [azimuth, elevation, setAzimuth, setElevation]);
 
-  console.log("Earth rendering, satellites:", satellites.length);
+  console.log("Earth rendering, satellites:", filteredSatellites.length);
 
   return (
     <group ref={earthRef} position={[0, 0, 0]}>
@@ -241,8 +241,8 @@ const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => 
         </>
       )}
       
-      {/* Render all satellites */}
-      {satellites.map(satellite => (
+      {/* Render filtered satellites */}
+      {filteredSatellites.map(satellite => (
         <Satellite 
           key={satellite.id}
           satellite={satellite}
