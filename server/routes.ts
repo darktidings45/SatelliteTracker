@@ -98,7 +98,7 @@ let satelliteCache: any[] = [];
 let lastFetchTime = 0;
 const CACHE_DURATION = 3600000; // 1 hour in milliseconds
 
-// Force cache invalidation to fetch expanded catalog
+// Force cache invalidation to fetch full expanded catalog
 satelliteCache = [];
 lastFetchTime = 0;
 
@@ -131,8 +131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         satellites = satellites.filter(sat => sat.type === typeFilter);
       }
       
-      // Limit to 50 satellites per request for performance
-      satellites = satellites.slice(0, 50);
+      // Return all satellites - let client handle performance optimization
       
       // Return the satellite data
       res.json(satellites);
