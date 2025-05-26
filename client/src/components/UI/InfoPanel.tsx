@@ -15,6 +15,27 @@ const InfoPanel = () => {
   const closePanel = () => {
     setSelectedSatellite(null);
   };
+
+  // Copy TLE data to clipboard
+  const copyTLEData = async () => {
+    if (selectedSatellite && selectedSatellite.tle) {
+      try {
+        const tleText = selectedSatellite.tle.join('\n');
+        await navigator.clipboard.writeText(tleText);
+        // You could add a toast notification here if desired
+        console.log('TLE data copied to clipboard');
+      } catch (err) {
+        console.error('Failed to copy TLE data:', err);
+        // Fallback: create a text area and select it
+        const textArea = document.createElement('textarea');
+        textArea.value = selectedSatellite.tle.join('\n');
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+    }
+  };
   
   // If no satellite is selected, don't render the panel
   if (!selectedSatellite) {
@@ -80,7 +101,16 @@ const InfoPanel = () => {
           </div>
           
           <div className="bg-[#1a2634] p-3 rounded">
-            <h3 className="text-sm font-semibold mb-2 text-[#3498db]">Two-Line Element</h3>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-semibold text-[#3498db]">Two-Line Element</h3>
+              <button
+                onClick={copyTLEData}
+                className="bg-[#30718d] hover:bg-[#3498db] text-white px-3 py-1 rounded text-xs transition-colors"
+                title="Copy TLE data to clipboard"
+              >
+                Copy TLE
+              </button>
+            </div>
             <div className="font-mono text-xs overflow-x-auto whitespace-pre">
               {selectedSatellite.tle[0]}<br/>
               {selectedSatellite.tle[1]}<br/>
