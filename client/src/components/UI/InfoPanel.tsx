@@ -22,13 +22,48 @@ const InfoPanel = () => {
       try {
         const tleText = selectedSatellite.tle.join('\n');
         await navigator.clipboard.writeText(tleText);
-        // You could add a toast notification here if desired
         console.log('TLE data copied to clipboard');
       } catch (err) {
         console.error('Failed to copy TLE data:', err);
         // Fallback: create a text area and select it
         const textArea = document.createElement('textarea');
         textArea.value = selectedSatellite.tle.join('\n');
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+    }
+  };
+
+  // Copy complete satellite card information to clipboard
+  const copyCard = async () => {
+    if (selectedSatellite) {
+      const cardText = `${selectedSatellite.name}
+${'-'.repeat(selectedSatellite.name.length)}
+
+Basic Information:
+• NORAD ID: ${selectedSatellite.id}
+• Type: ${selectedSatellite.type || 'Unknown'}
+• Launch Date: ${selectedSatellite.launchDate || 'Unknown'}
+
+Orbital Parameters:
+• Altitude: ${selectedSatellite.altitude ? `${selectedSatellite.altitude.toFixed(2)} km` : 'Calculating...'}
+• Velocity: ${selectedSatellite.velocity ? `${selectedSatellite.velocity.toFixed(2)} km/s` : 'Calculating...'}
+• Period: ${selectedSatellite.period ? `${selectedSatellite.period.toFixed(2)} min` : 'Calculating...'}
+• Inclination: ${selectedSatellite.inclination ? `${selectedSatellite.inclination.toFixed(2)}°` : 'Unknown'}
+
+Two-Line Element (TLE):
+${selectedSatellite.tle.join('\n')}`;
+
+      try {
+        await navigator.clipboard.writeText(cardText);
+        console.log('Satellite card copied to clipboard');
+      } catch (err) {
+        console.error('Failed to copy satellite card:', err);
+        // Fallback method
+        const textArea = document.createElement('textarea');
+        textArea.value = cardText;
         document.body.appendChild(textArea);
         textArea.select();
         document.execCommand('copy');
@@ -51,7 +86,14 @@ const InfoPanel = () => {
     )}>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold font-mono truncate">{selectedSatellite.name}</h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <button
+            onClick={copyCard}
+            className="bg-[#30718d] hover:bg-[#3498db] text-white px-3 py-1 rounded text-xs transition-colors"
+            title="Copy all satellite details to clipboard"
+          >
+            Copy Card
+          </button>
           <button 
             onClick={togglePanel}
             className="text-[#3498db] hover:text-[#f7d794] transition-colors"
