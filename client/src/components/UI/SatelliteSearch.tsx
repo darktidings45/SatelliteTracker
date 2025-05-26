@@ -4,7 +4,7 @@ import { SatelliteData } from '../../hooks/useSatellites';
 import { cn } from '../../lib/utils';
 
 const SatelliteSearch = () => {
-  const { satellites, selectedSatellite, setSelectedSatellite } = useSatelliteStore();
+  const { satellites, selectedSatellite, focusOnSatellite } = useSatelliteStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -57,7 +57,7 @@ const SatelliteSearch = () => {
 
   // Handle satellite selection
   const handleSatelliteSelect = (satellite: SatelliteData) => {
-    setSelectedSatellite(satellite);
+    focusOnSatellite(satellite);
     setIsExpanded(false);
     setSearchTerm('');
     setSelectedIndex(-1);
