@@ -175,8 +175,12 @@ export const useSatelliteStore = create<SatelliteState>()(
           
           const data = await response.json();
           
+          // Apply bandwidth limits
+          const { maxSatellites } = get();
+          const limitedData = maxSatellites > 0 ? data.slice(0, maxSatellites) : data;
+          
           // Process the satellite data
-          const satellites = data.map((sat: any) => {
+          const satellites = limitedData.map((sat: any) => {
             // Create orbital path geometry
             const orbitGeometry = calculateOrbitPath(sat.tle);
             

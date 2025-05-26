@@ -23,7 +23,13 @@ function App() {
   const [azimuth, setAzimuth] = useState(0);
   const [elevation, setElevation] = useState(0);
 
-  // Initialize sounds and load data
+  // Handle bandwidth selection
+  const handleBandwidthSelect = (settings: BandwidthSettings) => {
+    setBandwidthSettings(settings.mode, settings.maxSatellites, settings.loadAllOnFilter);
+    loadSatellites();
+  };
+
+  // Initialize sounds and setup
   useEffect(() => {
     const hit = new Audio("/sounds/hit.mp3");
     const success = new Audio("/sounds/success.mp3");
@@ -33,9 +39,6 @@ function App() {
     
     // Auto-mute on start (user needs to interact to enable sound)
     toggleMute();
-    
-    // Load satellite data
-    loadSatellites();
     
     // Show the canvas once everything is ready
     setShowCanvas(true);
@@ -48,6 +51,10 @@ function App() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', background: '#0a0f16' }}>
+      {!bandwidthSelected && !loading && !error && (
+        <BandwidthSelector onSelect={handleBandwidthSelect} />
+      )}
+      
       {loading && (
         <div className="loading-overlay">
           <div className="loading-spinner"></div>
