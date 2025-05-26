@@ -24,12 +24,16 @@ const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => 
   // Get satellites and filter states from store
   const { 
     filteredSatellites, 
+    selectedSatellite,
     currentTime, 
     userLocation,
     apertureAngle,
     autoRotateEarth,
     showApertureCone
   } = useSatelliteStore();
+  
+  // Get Three.js scene controls
+  const { gl } = useThree();
   
   // Load Earth texture maps
   const earthTextures = useTexture({
@@ -70,8 +74,7 @@ const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => 
     }
   });
 
-  // Access the Three.js camera
-  const { camera } = useThree();
+  // Camera access is already available from above
   
   // Direction controls now passed as props
   

@@ -48,6 +48,7 @@ interface SatelliteState {
   resetTime: () => void;
   toggleEarthRotation: () => void;
   toggleApertureCone: () => void;
+  focusOnSatellite: (satellite: SatelliteData) => void;
 }
 
 // Utility functions moved from useSatellites hook
@@ -296,6 +297,11 @@ export const useSatelliteStore = create<SatelliteState>()(
       // Toggle aperture cone visibility
       toggleApertureCone: () => {
         set(state => ({ showApertureCone: !state.showApertureCone }));
+      },
+      
+      // Focus camera on satellite (placeholder for now)
+      focusOnSatellite: (satellite: SatelliteData) => {
+        set({ selectedSatellite: satellite });
       }
     };
   })

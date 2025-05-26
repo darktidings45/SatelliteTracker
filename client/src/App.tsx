@@ -8,6 +8,7 @@ import FilterPanel from './components/UI/FilterPanel';
 import InfoPanel from './components/UI/InfoPanel';
 import TimeControls from './components/UI/TimeControls';
 import PassPrediction from './components/UI/PassPrediction';
+import SatelliteSearch from './components/UI/SatelliteSearch';
 import { useSatelliteStore } from './lib/stores/useSatelliteStore';
 import "@fontsource/inter";
 
@@ -108,6 +109,11 @@ function App() {
           </Canvas>
           
           {/* UI Components */}
+          {/* Satellite Search - Top Left */}
+          <div className="absolute top-4 left-4 w-80 z-10">
+            <SatelliteSearch />
+          </div>
+          
           <FilterPanel directionControls={{
             azimuth,
             elevation,
