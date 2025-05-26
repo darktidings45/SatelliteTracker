@@ -18,6 +18,12 @@ interface SatelliteState {
   filteredSatellites: SatelliteData[];
   selectedSatellite: SatelliteData | null;
   
+  // Bandwidth settings
+  bandwidthMode: 'low' | 'high' | null;
+  maxSatellites: number;
+  loadAllOnFilter: boolean;
+  bandwidthSelected: boolean;
+  
   // Filtering
   selectedSatelliteTypes: Set<string>;
   userLocation: GeoLocation | null;
@@ -49,6 +55,7 @@ interface SatelliteState {
   toggleEarthRotation: () => void;
   toggleApertureCone: () => void;
   focusOnSatellite: (satellite: SatelliteData) => void;
+  setBandwidthSettings: (mode: 'low' | 'high', maxSatellites: number, loadAllOnFilter: boolean) => void;
 }
 
 // Utility functions moved from useSatellites hook
@@ -147,6 +154,12 @@ export const useSatelliteStore = create<SatelliteState>()(
       showApertureCone: true,
       loading: false,
       error: null,
+      
+      // Bandwidth settings
+      bandwidthMode: null,
+      maxSatellites: 5000,
+      loadAllOnFilter: false,
+      bandwidthSelected: false,
       
       // Load satellite data
       loadSatellites: async () => {
@@ -302,6 +315,16 @@ export const useSatelliteStore = create<SatelliteState>()(
       // Focus camera on satellite (placeholder for now)
       focusOnSatellite: (satellite: SatelliteData) => {
         set({ selectedSatellite: satellite });
+      },
+      
+      // Set bandwidth settings
+      setBandwidthSettings: (mode: 'low' | 'high', maxSatellites: number, loadAllOnFilter: boolean) => {
+        set({ 
+          bandwidthMode: mode,
+          maxSatellites,
+          loadAllOnFilter,
+          bandwidthSelected: true
+        });
       }
     };
   })

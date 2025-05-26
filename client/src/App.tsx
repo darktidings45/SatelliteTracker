@@ -9,13 +9,14 @@ import InfoPanel from './components/UI/InfoPanel';
 import TimeControls from './components/UI/TimeControls';
 import PassPrediction from './components/UI/PassPrediction';
 import SatelliteSearch from './components/UI/SatelliteSearch';
+import BandwidthSelector, { BandwidthSettings } from './components/UI/BandwidthSelector';
 import { useSatelliteStore } from './lib/stores/useSatelliteStore';
 import "@fontsource/inter";
 
 // Main App component
 function App() {
   const [showCanvas, setShowCanvas] = useState(false);
-  const { loadSatellites, loading, error } = useSatelliteStore();
+  const { loadSatellites, loading, error, bandwidthSelected, setBandwidthSettings } = useSatelliteStore();
   const { setHitSound, setSuccessSound, toggleMute } = useAudio();
   
   // Direction controls for the aperture cone
