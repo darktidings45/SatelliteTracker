@@ -200,9 +200,30 @@ export const useSatelliteStore = create<SatelliteState>()(
             };
           });
           
+          // Apply existing filters to newly loaded satellites
+          const { selectedSatelliteTypes, searchFilters } = get();
+          let filtered = satellites;
+          
+          // Apply type filter
+          if (!selectedSatelliteTypes.has('ALL')) {
+            filtered = filtered.filter(sat => 
+              selectedSatelliteTypes.has(sat.type || 'UNKNOWN')
+            );
+          }
+          
+          // Apply search filters
+          if (searchFilters.size > 0) {
+            filtered = filtered.filter(sat => {
+              const name = sat.name.toLowerCase();
+              return Array.from(searchFilters).some(term => 
+                name.includes(term)
+              );
+            });
+          }
+          
           set({ 
             satellites, 
-            filteredSatellites: satellites,
+            filteredSatellites: filtered,
             loading: false 
           });
           
@@ -258,14 +279,25 @@ export const useSatelliteStore = create<SatelliteState>()(
           }
         }
         
-        // Apply the filter
-        let filtered: SatelliteData[];
-        if (newSelectedTypes.has('ALL')) {
-          filtered = satellites;
-        } else {
-          filtered = satellites.filter(sat => 
+        // Apply both type and search filters
+        const { searchFilters } = get();
+        let filtered = satellites;
+        
+        // Apply type filter
+        if (!newSelectedTypes.has('ALL')) {
+          filtered = filtered.filter(sat => 
             newSelectedTypes.has(sat.type || 'UNKNOWN')
           );
+        }
+        
+        // Apply search filters
+        if (searchFilters.size > 0) {
+          filtered = filtered.filter(sat => {
+            const name = sat.name.toLowerCase();
+            return Array.from(searchFilters).some(term => 
+              name.includes(term)
+            );
+          });
         }
         
         set({ 
