@@ -8,13 +8,31 @@ import fetch from 'node-fetch';
 // CelesTrak API endpoints
 const CELESTRAK_API_BASE = 'https://celestrak.org/NORAD/elements/gp.php';
 
-// Satellite categories to fetch
+// Satellite categories to fetch from CelesTrak
 const SATELLITE_CATEGORIES = {
-  'ISS': 'stations',
+  'SPACE_STATIONS': 'stations',
   'WEATHER': 'weather',
   'COMMUNICATION': 'active',
   'NAVIGATION': 'gps-ops',
-  'SCIENCE': 'science'
+  'SCIENCE': 'science',
+  'MILITARY': 'military',
+  'AMATEUR': 'amateur',
+  'EARTH_RESOURCES': 'resource',
+  'SEARCH_RESCUE': 'sarsat',
+  'GEODETIC': 'geodetic',
+  'ENGINEERING': 'engineering',
+  'EDUCATION': 'education',
+  'MISCELLANEOUS': 'misc',
+  'CUBESATS': 'cubesat',
+  'STARLINK': 'starlink',
+  'ONEWEB': 'oneweb',
+  'IRIDIUM': 'iridium',
+  'GLOBALSTAR': 'globalstar',
+  'ORBCOMM': 'orbcomm',
+  'GOES': 'goes',
+  'NOAA': 'noaa',
+  'PLANET': 'planet',
+  'SPIRE': 'spire'
 };
 
 // Fetch TLE data from CelesTrak
@@ -79,6 +97,10 @@ async function fetchTLEData(category: string) {
 let satelliteCache: any[] = [];
 let lastFetchTime = 0;
 const CACHE_DURATION = 3600000; // 1 hour in milliseconds
+
+// Force cache invalidation to fetch expanded catalog
+satelliteCache = [];
+lastFetchTime = 0;
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API route to get satellite data
