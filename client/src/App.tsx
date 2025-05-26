@@ -7,6 +7,7 @@ import Stars from './components/Stars';
 import FilterPanel from './components/UI/FilterPanel';
 import InfoPanel from './components/UI/InfoPanel';
 import TimeControls from './components/UI/TimeControls';
+import PassPrediction from './components/UI/PassPrediction';
 import { useSatelliteStore } from './lib/stores/useSatelliteStore';
 import "@fontsource/inter";
 
@@ -115,6 +116,7 @@ function App() {
           }} />
           <InfoPanel />
           <TimeControls />
+          <PassPrediction />
         </>
       )}
     </div>
