@@ -14,8 +14,8 @@ interface DirectionControls {
 
 const FilterPanel = ({ directionControls }: { directionControls?: DirectionControls }) => {
   const { 
-    setSatelliteTypeFilter, 
-    satelliteTypeFilter,
+    toggleSatelliteType, 
+    selectedSatelliteTypes,
     setUserLocation,
     userLocation,
     setApertureAngle,
@@ -81,11 +81,11 @@ const FilterPanel = ({ directionControls }: { directionControls?: DirectionContr
               {satelliteTypes.map(type => (
                 <button
                   key={type.id}
-                  onClick={() => setSatelliteTypeFilter(type.id)}
+                  onClick={() => toggleSatelliteType(type.id)}
                   className={cn(
                     "px-2 py-1 text-xs rounded",
                     "transition-colors duration-200",
-                    satelliteTypeFilter === type.id 
+                    selectedSatelliteTypes.has(type.id)
                       ? "bg-[#30718d] text-white" 
                       : "bg-[#1a2634] text-[#b2bec3] hover:bg-[#233246]"
                   )}

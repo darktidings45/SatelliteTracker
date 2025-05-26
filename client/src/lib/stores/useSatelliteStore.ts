@@ -19,7 +19,7 @@ interface SatelliteState {
   selectedSatellite: SatelliteData | null;
   
   // Filtering
-  satelliteTypeFilter: string;
+  selectedSatelliteTypes: Set<string>;
   userLocation: GeoLocation | null;
   apertureAngle: number;
   
@@ -38,7 +38,7 @@ interface SatelliteState {
   
   // Actions
   loadSatellites: () => Promise<void>;
-  setSatelliteTypeFilter: (type: string) => void;
+  toggleSatelliteType: (type: string) => void;
   setUserLocation: (location: GeoLocation | null) => void;
   setApertureAngle: (angle: number) => void;
   setSelectedSatellite: (satellite: SatelliteData | null) => void;
@@ -136,7 +136,7 @@ export const useSatelliteStore = create<SatelliteState>()(
       satellites: [],
       filteredSatellites: [],
       selectedSatellite: null,
-      satelliteTypeFilter: 'ALL',
+      selectedSatelliteTypes: new Set(['ALL']),
       userLocation: null,
       apertureAngle: DEFAULT_APERTURE_ANGLE,
       currentTime: new Date(),
@@ -207,20 +207,50 @@ export const useSatelliteStore = create<SatelliteState>()(
         }
       },
       
-      // Filter satellites by type
-      setSatelliteTypeFilter: (type) => {
-        set({ satelliteTypeFilter: type });
+      // Toggle satellite type selection (multi-select)
+      toggleSatelliteType: (type: string) => {
+        const { selectedSatelliteTypes, satellites } = get();
+        const newSelectedTypes = new Set(selectedSatelliteTypes);
+        
+        if (type === 'ALL') {
+          // If "All Satellites" is selected, clear all other selections
+          newSelectedTypes.clear();
+          newSelectedTypes.add('ALL');
+        } else {
+          // Remove "ALL" if it's selected and we're selecting a specific type
+          if (newSelectedTypes.has('ALL')) {
+            newSelectedTypes.delete('ALL');
+          }
+          
+          // Toggle the selected type
+          if (newSelectedTypes.has(type)) {
+            newSelectedTypes.delete(type);
+          } else {
+            newSelectedTypes.add(type);
+          }
+          
+          // If no types are selected, default to "ALL"
+          if (newSelectedTypes.size === 0) {
+            newSelectedTypes.add('ALL');
+          }
+        }
         
         // Apply the filter
-        const { satellites } = get();
-        const filtered = type === 'ALL' 
-          ? satellites 
-          : satellites.filter(sat => sat.type === type);
+        let filtered: SatelliteData[];
+        if (newSelectedTypes.has('ALL')) {
+          filtered = satellites;
+        } else {
+          filtered = satellites.filter(sat => 
+            newSelectedTypes.has(sat.type || 'UNKNOWN')
+          );
+        }
         
-        // Force update filtered satellites
-        set({ filteredSatellites: filtered });
+        set({ 
+          selectedSatelliteTypes: newSelectedTypes,
+          filteredSatellites: filtered 
+        });
         
-        console.log(`Satellite type filter applied: ${type}, found ${filtered.length} satellites`);
+        console.log(`Satellite types selected: ${Array.from(newSelectedTypes).join(', ')}, showing ${filtered.length} satellites`);
       },
       
       // Set user location for visibility filtering

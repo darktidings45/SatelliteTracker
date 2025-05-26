@@ -82,7 +82,7 @@ const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => 
   }, [userLocation]);
   
   // Basic cone data calculation
-  const coneHeight = EARTH_RADIUS * 4;
+  const coneHeight = EARTH_RADIUS * 6;
   const coneBaseRadius = useMemo(() => {
     return coneHeight * Math.tan((apertureAngle * Math.PI / 180) / 2);
   }, [apertureAngle]);
