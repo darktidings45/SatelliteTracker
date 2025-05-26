@@ -75,47 +75,66 @@ const Earth = ({ azimuth, elevation, setAzimuth, setElevation }: EarthProps) => 
     }
   });
 
-  // Effect to center camera on selected satellite
+  // Track if we're following a satellite
+  const [isFollowingSatellite, setIsFollowingSatellite] = useState(false);
+  const [lastUserInteraction, setLastUserInteraction] = useState(0);
+
+  // Effect to rotate Earth to center selected satellite
   useEffect(() => {
-    if (selectedSatellite && controls) {
+    if (selectedSatellite && earthRef.current) {
+      setIsFollowingSatellite(true);
+      
       // Calculate the satellite's current position
-      const satPosition = calculateSatellitePosition(selectedSatellite, currentTime);
+      const satPosition = calculateSatellitePosition(selectedSatellite.tle, currentTime);
       
       if (satPosition) {
-        // Convert to Three.js coordinates and scale to match our Earth radius
-        const targetPosition = new THREE.Vector3(
-          satPosition.x * EARTH_RADIUS,
-          satPosition.y * EARTH_RADIUS, 
-          satPosition.z * EARTH_RADIUS
-        );
+        // Convert satellite position to spherical coordinates
+        const spherical = new THREE.Spherical();
+        spherical.setFromVector3(satPosition);
         
-        // Smoothly animate camera to focus on satellite
-        const distance = 25; // Distance from satellite
-        const cameraPosition = targetPosition.clone().normalize().multiplyScalar(distance);
+        // Calculate the rotation needed to center the satellite
+        const targetRotationY = -spherical.theta; // Longitude rotation
+        const targetRotationX = 0; // Keep Earth upright
         
-        // Set camera target to the satellite position
-        controls.target.copy(targetPosition);
-        
-        // Animate camera position
-        const startPos = camera.position.clone();
-        const endPos = cameraPosition;
+        // Smoothly rotate Earth to center the satellite
+        const startRotationY = earthRef.current.rotation.y;
+        const startRotationX = earthRef.current.rotation.x;
         
         let progress = 0;
         const animate = () => {
-          progress += 0.02; // Animation speed
+          if (!isFollowingSatellite) return; // Stop if user interacted
+          
+          progress += 0.03; // Animation speed
           if (progress < 1) {
-            camera.position.lerpVectors(startPos, endPos, progress);
-            controls.update();
+            if (earthRef.current) {
+              earthRef.current.rotation.y = THREE.MathUtils.lerp(startRotationY, targetRotationY, progress);
+              earthRef.current.rotation.x = THREE.MathUtils.lerp(startRotationX, targetRotationX, progress);
+            }
             requestAnimationFrame(animate);
-          } else {
-            camera.position.copy(endPos);
-            controls.update();
           }
         };
         animate();
       }
     }
-  }, [selectedSatellite, currentTime, camera, controls]);
+  }, [selectedSatellite, currentTime, isFollowingSatellite]);
+
+  // Detect user interaction to cancel satellite following
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      setIsFollowingSatellite(false);
+    };
+
+    // Add event listeners for mouse and touch interactions
+    window.addEventListener('mousedown', handleUserInteraction);
+    window.addEventListener('wheel', handleUserInteraction);
+    window.addEventListener('touchstart', handleUserInteraction);
+
+    return () => {
+      window.removeEventListener('mousedown', handleUserInteraction);
+      window.removeEventListener('wheel', handleUserInteraction);
+      window.removeEventListener('touchstart', handleUserInteraction);
+    };
+  }, []);
   
   // Direction controls now passed as props
   
