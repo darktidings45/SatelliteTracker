@@ -109,8 +109,8 @@ function App() {
           </Canvas>
           
           {/* UI Components */}
-          {/* Satellite Search - Top Left */}
-          <div className="absolute top-4 left-4 w-80 z-10">
+          {/* Satellite Search - Top Center */}
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-96 z-20">
             <SatelliteSearch />
           </div>
           
