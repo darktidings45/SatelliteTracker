@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Html, Sphere } from '@react-three/drei';
-import { SatelliteData } from '../hooks/useSatellites';
+import { SatelliteData, calculateSatelliteInfo } from '../hooks/useSatellites';
 import { useSatelliteStore } from '../lib/stores/useSatelliteStore';
 import { calculateSatellitePosition } from '../lib/satellite-utils';
 import { EARTH_RADIUS, SATELLITE_SCALE } from '../lib/consts';
@@ -32,6 +32,14 @@ const Satellite = ({
   const position = useMemo(() => {
     return calculateSatellitePosition(satellite.tle, currentTime);
   }, [satellite.tle, currentTime]);
+
+  // Calculate orbital parameters for the selected satellite
+  const orbitalParams = useMemo(() => {
+    if (selectedSatellite && selectedSatellite.id === satellite.id) {
+      return calculateSatelliteInfo(satellite, currentTime);
+    }
+    return {};
+  }, [satellite, currentTime, selectedSatellite]);
   
   // Temporarily disabled cone detection - remove red highlighting
   const isInCone = false;
@@ -67,7 +75,13 @@ const Satellite = ({
   // Handle satellite selection
   const handleClick = () => {
     playHit();
-    setSelectedSatellite(satellite);
+    // Calculate current orbital parameters and merge with satellite data
+    const currentOrbitalParams = calculateSatelliteInfo(satellite, currentTime);
+    const updatedSatellite = { 
+      ...satellite, 
+      ...currentOrbitalParams 
+    };
+    setSelectedSatellite(updatedSatellite);
   };
   
   // Check if this satellite is currently selected
