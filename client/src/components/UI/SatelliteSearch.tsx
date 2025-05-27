@@ -28,40 +28,52 @@ const SatelliteSearch = () => {
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isExpanded || filteredSatellites.length === 0) return;
-
     switch (e.key) {
       case 'ArrowDown':
-        e.preventDefault();
-        setSelectedIndex(prev => 
-          prev < filteredSatellites.length - 1 ? prev + 1 : prev
-        );
+        if (isExpanded && filteredSatellites.length > 0) {
+          e.preventDefault();
+          setSelectedIndex(prev => 
+            prev < filteredSatellites.length - 1 ? prev + 1 : prev
+          );
+        }
         break;
       case 'ArrowUp':
-        e.preventDefault();
-        setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
+        if (isExpanded && filteredSatellites.length > 0) {
+          e.preventDefault();
+          setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
+        }
         break;
       case 'Enter':
         e.preventDefault();
-        if (selectedIndex >= 0 && filteredSatellites[selectedIndex]) {
+        if (isExpanded && selectedIndex >= 0 && filteredSatellites[selectedIndex]) {
+          // Select specific satellite from dropdown
           handleSatelliteSelect(filteredSatellites[selectedIndex]);
+        } else if (searchTerm.trim()) {
+          // Apply free-form text filter
+          handleTextFilter(searchTerm.trim());
         }
         break;
       case 'Escape':
         e.preventDefault();
         setIsExpanded(false);
         setSearchTerm('');
+        setSelectedIndex(-1);
         break;
     }
   };
 
-  // Handle satellite selection
+  // Handle free-form text filtering (Enter key without selection)
+  const handleTextFilter = (text: string) => {
+    addSearchFilter(text);
+    setIsExpanded(false);
+    setSearchTerm('');
+    setSelectedIndex(-1);
+  };
+
+  // Handle satellite selection from dropdown
   const handleSatelliteSelect = (satellite: SatelliteData) => {
-    // Add current search term as a filter if there's a search term
-    if (searchTerm.trim()) {
-      addSearchFilter(searchTerm.trim());
-    }
-    
+    // Add the specific satellite name as a filter for precise filtering
+    addSearchFilter(satellite.name);
     focusOnSatellite(satellite);
     setIsExpanded(false);
     setSearchTerm('');
@@ -100,7 +112,7 @@ const SatelliteSearch = () => {
           </svg>
           <input
             type="text"
-            placeholder="Search satellites..."
+            placeholder="Search satellites... (Enter to filter, ↑↓ to select)"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onFocus={handleFocus}
@@ -127,6 +139,16 @@ const SatelliteSearch = () => {
       {/* Search Results */}
       {isExpanded && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a2634] border border-[#34495e] rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+          {searchTerm && (
+            <div className="px-3 py-2 border-b border-[#34495e] bg-[#233246]">
+              <div className="text-xs text-[#b2bec3]">
+                <span className="text-[#f7d794]">Enter</span> to filter all satellites containing "{searchTerm}"
+              </div>
+              <div className="text-xs text-[#b2bec3] mt-1">
+                or <span className="text-[#f7d794]">click/select</span> a specific satellite below:
+              </div>
+            </div>
+          )}
           {filteredSatellites.length > 0 ? (
             <div className="py-1">
               {filteredSatellites.map((satellite, index) => (
